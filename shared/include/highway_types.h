@@ -35,6 +35,7 @@ typedef struct Trip {
   int entry_index;
   int exit_index;
   int ticks_left;
+  int total_ticks;
   int distance_km;
   double expected_toll;
 } Trip;

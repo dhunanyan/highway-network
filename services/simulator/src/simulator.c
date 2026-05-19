@@ -54,7 +54,16 @@ static int spawn_trip(const Network *network, SimulationState *state)
   if (trip->distance_km < 10) {
     trip->distance_km = 10;
   }
-  trip->ticks_left = 2 + (trip->distance_km / 50);
+  {
+    const double ticks_per_km = 0.35;
+    const int base_ticks = 8;
+    int scaled_ticks = base_ticks + (int)(trip->distance_km * ticks_per_km);
+    if (scaled_ticks < 12) {
+      scaled_ticks = 12;
+    }
+    trip->total_ticks = scaled_ticks;
+    trip->ticks_left = scaled_ticks;
+  }
   trip->expected_toll = trip->distance_km * network->price_per_km;
   create_plate(trip->trip_id, trip->plate, sizeof(trip->plate));
 
@@ -179,13 +188,14 @@ void simulation_write_json(FILE *out, const Network *network, const SimulationSt
     if (!trip->active) continue;
     if (emitted > 0) fprintf(out, ",");
     fprintf(out,
-      "{\"tripId\":%d,\"plate\":\"%s\",\"entryId\":\"%s\",\"exitId\":\"%s\",\"distanceKm\":%d,\"ticksLeft\":%d,\"toll\":%.2f}",
+      "{\"tripId\":%d,\"plate\":\"%s\",\"entryId\":\"%s\",\"exitId\":\"%s\",\"distanceKm\":%d,\"ticksLeft\":%d,\"totalTicks\":%d,\"toll\":%.2f}",
       trip->trip_id,
       trip->plate,
       network->entries[trip->entry_index].id,
       network->exits[trip->exit_index].id,
       trip->distance_km,
       trip->ticks_left,
+      trip->total_ticks,
       trip->expected_toll);
     emitted++;
   }

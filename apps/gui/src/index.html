@@ -75,205 +75,37 @@
       <section class="panel full">
         <h3>Live Traffic Map</h3>
         <div class="map-wrap">
-          <svg id="trafficMap" viewBox="0 0 1200 360" preserveAspectRatio="xMidYMid meet"></svg>
+          <svg
+            id="trafficMap"
+            viewBox="0 0 1200 360"
+            preserveAspectRatio="xMidYMid meet"
+          ></svg>
         </div>
         <div class="map-caption">
-          Dotted lines represent active trips. Moving circles show estimated vehicle progress between gates.
+          Dotted lines represent active trips. Moving circles show estimated
+          vehicle progress between gates.
+        </div>
+        <div class="legend">
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #34d399"></span>
+            Low Toll (&lt; 80 PLN)
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #f59e0b"></span>
+            Medium Toll (80-160 PLN)
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #ef4444"></span>
+            High Toll (&gt; 160 PLN)
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #cbd5e1"></span>
+            Gate Node
+          </div>
         </div>
       </section>
     </div>
 
-    <script>
-      const mTick = document.getElementById("mTick");
-      const mActive = document.getElementById("mActive");
-      const mCompleted = document.getElementById("mCompleted");
-      const mRevenue = document.getElementById("mRevenue");
-      const entries = document.getElementById("entries");
-      const exits = document.getElementById("exits");
-      const trips = document.getElementById("trips");
-      const statusEl = document.getElementById("status");
-      const trafficMap = document.getElementById("trafficMap");
-
-      const btnTick1 = document.getElementById("tick1");
-      const btnTick5 = document.getElementById("tick5");
-      const btnTick20 = document.getElementById("tick20");
-      const btnAuto = document.getElementById("auto");
-      const btnReset = document.getElementById("reset");
-
-      let autoTimer = null;
-      let pollTimer = null;
-
-      function escapeHtml(str) {
-        return String(str)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/\"/g, "&quot;")
-          .replace(/'/g, "&#39;");
-      }
-
-      function buildGateMap(gates, x) {
-        const map = {};
-        const count = Math.max(1, gates.length);
-        const top = 60;
-        const bottom = 300;
-        const step = count > 1 ? (bottom - top) / (count - 1) : 0;
-        gates.forEach((g, idx) => {
-          map[g.id] = { x, y: top + idx * step, gate: g };
-        });
-        return map;
-      }
-
-      function renderTrafficMap(state) {
-        if (!state || state.error) {
-          trafficMap.innerHTML = "";
-          return;
-        }
-
-        const entryPos = buildGateMap(state.entries, 160);
-        const exitPos = buildGateMap(state.exits, 1040);
-        const laneY = 180;
-
-        let svg = `
-          <defs>
-            <linearGradient id="roadGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#1d4ed8" stop-opacity="0.25" />
-              <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0.25" />
-            </linearGradient>
-          </defs>
-          <rect x="120" y="${laneY - 40}" width="960" height="80" rx="20" fill="url(#roadGrad)" />
-          <line x1="120" y1="${laneY}" x2="1080" y2="${laneY}" stroke="#334155" stroke-width="3" stroke-dasharray="10 10" />
-        `;
-
-        state.entries.forEach((g) => {
-          const p = entryPos[g.id];
-          svg += `
-            <circle cx="${p.x}" cy="${p.y}" r="12" fill="#22c55e" stroke="#bbf7d0" stroke-width="2" />
-            <text x="${p.x - 20}" y="${p.y - 18}" fill="#cbd5e1" font-size="12" text-anchor="end">${escapeHtml(g.id)}</text>
-            <text x="${p.x - 20}" y="${p.y + 4}" fill="#94a3b8" font-size="11" text-anchor="end">${escapeHtml(g.name)}</text>
-          `;
-        });
-
-        state.exits.forEach((g) => {
-          const p = exitPos[g.id];
-          svg += `
-            <circle cx="${p.x}" cy="${p.y}" r="12" fill="#f97316" stroke="#fed7aa" stroke-width="2" />
-            <text x="${p.x + 20}" y="${p.y - 18}" fill="#cbd5e1" font-size="12" text-anchor="start">${escapeHtml(g.id)}</text>
-            <text x="${p.x + 20}" y="${p.y + 4}" fill="#94a3b8" font-size="11" text-anchor="start">${escapeHtml(g.name)}</text>
-          `;
-        });
-
-        state.activeTrips.forEach((t, idx) => {
-          const start = entryPos[t.entryId];
-          const end = exitPos[t.exitId];
-          if (!start || !end) return;
-
-          const totalTicks = Math.max(1, Number(t.totalTicks || 1));
-          const rawProgress = 1 - t.ticksLeft / totalTicks;
-          const progress = Math.max(0, Math.min(1, rawProgress));
-
-          const vx = start.x + (end.x - start.x) * progress;
-          const vy = start.y + (end.y - start.y) * progress;
-          const color = ["#60a5fa", "#a78bfa", "#34d399", "#f59e0b", "#fb7185"][idx % 5];
-
-          svg += `
-            <line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${color}" stroke-width="2" stroke-dasharray="5 6" opacity="0.9" />
-            <circle cx="${vx}" cy="${vy}" r="7" fill="${color}">
-              <animate attributeName="r" values="6.5;8;6.5" dur="1.6s" repeatCount="indefinite" />
-            </circle>
-          `;
-        });
-
-        if (!state.activeTrips.length) {
-          svg += `<text x="600" y="188" fill="#94a3b8" font-size="14" text-anchor="middle">No active trips on the network</text>`;
-        }
-
-        trafficMap.innerHTML = svg;
-      }
-
-      function render(state) {
-        if (!state) {
-          statusEl.textContent = "No response from simulator.";
-          return;
-        }
-        if (state.error) {
-          statusEl.textContent = `Simulator error: ${state.error}${state.details ? ` (${state.details})` : ""}`;
-          return;
-        }
-        statusEl.textContent = "";
-        mTick.textContent = state.tick;
-        mActive.textContent = state.activeTripCount;
-        mCompleted.textContent = state.completedTrips;
-        mRevenue.textContent = `${state.revenue.toFixed(2)} ${state.currency}`;
-
-        entries.innerHTML = "";
-        state.entries.forEach((g) => {
-          const li = document.createElement("li");
-          li.textContent = `${g.id} - ${g.name} (km ${g.km})`;
-          entries.appendChild(li);
-        });
-
-        exits.innerHTML = "";
-        state.exits.forEach((g) => {
-          const li = document.createElement("li");
-          li.textContent = `${g.id} - ${g.name} (km ${g.km})`;
-          exits.appendChild(li);
-        });
-
-        trips.innerHTML = "";
-        if (!state.activeTrips.length) {
-          const tr = document.createElement("tr");
-          tr.innerHTML = '<td colspan="7" class="small">No active trips</td>';
-          trips.appendChild(tr);
-          renderTrafficMap(state);
-          return;
-        }
-
-        state.activeTrips.forEach((t) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `<td>${t.tripId}</td><td>${t.plate}</td><td>${t.entryId}</td><td>${t.exitId}</td><td>${t.distanceKm}</td><td>${t.ticksLeft}</td><td>${t.toll.toFixed(2)}</td>`;
-          trips.appendChild(tr);
-        });
-
-        renderTrafficMap(state);
-      }
-
-      async function refresh() {
-        render(await window.simApi.getState());
-      }
-
-      async function tick(steps) {
-        render(await window.simApi.tick(steps));
-      }
-
-      btnTick1.onclick = () => tick(1);
-      btnTick5.onclick = () => tick(5);
-      btnTick20.onclick = () => tick(20);
-      btnReset.onclick = async () => render(await window.simApi.reset());
-      btnAuto.onclick = () => {
-        if (autoTimer) {
-          clearInterval(autoTimer);
-          autoTimer = null;
-          btnAuto.textContent = "Start Auto";
-          return;
-        }
-        autoTimer = setInterval(() => tick(1), 700);
-        btnAuto.textContent = "Stop Auto";
-      };
-
-      refresh();
-      pollTimer = setInterval(() => {
-        refresh();
-      }, 800);
-
-      window.addEventListener("beforeunload", () => {
-        if (autoTimer) {
-          clearInterval(autoTimer);
-        }
-        if (pollTimer) {
-          clearInterval(pollTimer);
-        }
-      });
-    </script>
+    <script src="./script.js"></script>
   </body>
 </html>

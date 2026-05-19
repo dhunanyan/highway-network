@@ -18,6 +18,85 @@ static int random_range(int max_exclusive)
   return rand() % max_exclusive;
 }
 
+static void push_alert(
+  SimulationState *state,
+  const char *severity,
+  const char *message,
+  const char *plane_a,
+  const char *plane_b,
+  const char *route
+)
+{
+  int idx;
+  AlertEvent *a;
+  if (!state) {
+    return;
+  }
+
+  if (state->alert_count < MAX_ALERTS) {
+    idx = state->alert_count++;
+  } else {
+    memmove(&state->alerts[0], &state->alerts[1], (MAX_ALERTS - 1) * sizeof(AlertEvent));
+    idx = MAX_ALERTS - 1;
+  }
+
+  a = &state->alerts[idx];
+  memset(a, 0, sizeof(*a));
+  a->tick = state->tick;
+  snprintf(a->severity, sizeof(a->severity), "%s", severity ? severity : "warning");
+  snprintf(a->message, sizeof(a->message), "%s", message ? message : "");
+  snprintf(a->plane_a, sizeof(a->plane_a), "%s", plane_a ? plane_a : "");
+  snprintf(a->plane_b, sizeof(a->plane_b), "%s", plane_b ? plane_b : "");
+  snprintf(a->route, sizeof(a->route), "%s", route ? route : "");
+}
+
+static int can_launch_trip(
+  const SimulationState *state,
+  const Trip *candidate,
+  const Trip **conflict_trip,
+  int *conflict_progress_km
+)
+{
+  const int min_separation_km = 35;
+  int i;
+  if (!state || !candidate) {
+    return 0;
+  }
+
+  for (i = 0; i < MAX_ACTIVE_TRIPS; i++) {
+    const Trip *other = &state->trips[i];
+    double progress;
+    int progressed_km;
+    if (!other->active) {
+      continue;
+    }
+    if (other->entry_index != candidate->entry_index || other->exit_index != candidate->exit_index) {
+      continue;
+    }
+
+    progress = 1.0 - ((double)other->ticks_left / (double)(other->total_ticks > 0 ? other->total_ticks : 1));
+    if (progress < 0.0) {
+      progress = 0.0;
+    }
+    if (progress > 1.0) {
+      progress = 1.0;
+    }
+    progressed_km = (int)(progress * (double)other->distance_km);
+
+    if (progressed_km < min_separation_km) {
+      if (conflict_trip) {
+        *conflict_trip = other;
+      }
+      if (conflict_progress_km) {
+        *conflict_progress_km = progressed_km;
+      }
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
 void simulation_init(SimulationState *state)
 {
   if (!state) {
@@ -29,6 +108,11 @@ void simulation_init(SimulationState *state)
 
 static int spawn_trip(const Network *network, SimulationState *state)
 {
+  Trip candidate;
+  const Trip *conflict = NULL;
+  int conflict_progress_km = 0;
+  char route[48];
+  char alert_msg[192];
   Trip *trip;
   int slot = -1;
   int i;
@@ -44,28 +128,44 @@ static int spawn_trip(const Network *network, SimulationState *state)
     return 1;
   }
 
-  trip = &state->trips[slot];
-  memset(trip, 0, sizeof(*trip));
-  trip->active = 1;
-  trip->trip_id = state->next_trip_id++;
-  trip->entry_index = random_range(network->entry_count);
-  trip->exit_index = random_range(network->exit_count);
-  trip->distance_km = abs(network->exits[trip->exit_index].km - network->entries[trip->entry_index].km);
-  if (trip->distance_km < 10) {
-    trip->distance_km = 10;
+  memset(&candidate, 0, sizeof(candidate));
+  candidate.active = 1;
+  candidate.trip_id = state->next_trip_id;
+  candidate.entry_index = random_range(network->entry_count);
+  candidate.exit_index = random_range(network->exit_count);
+  candidate.distance_km = abs(network->exits[candidate.exit_index].km - network->entries[candidate.entry_index].km);
+  if (candidate.distance_km < 10) {
+    candidate.distance_km = 10;
   }
   {
     const double ticks_per_km = 0.35;
     const int base_ticks = 8;
-    int scaled_ticks = base_ticks + (int)(trip->distance_km * ticks_per_km);
+    int scaled_ticks = base_ticks + (int)(candidate.distance_km * ticks_per_km);
     if (scaled_ticks < 12) {
       scaled_ticks = 12;
     }
-    trip->total_ticks = scaled_ticks;
-    trip->ticks_left = scaled_ticks;
+    candidate.total_ticks = scaled_ticks;
+    candidate.ticks_left = scaled_ticks;
   }
-  trip->expected_toll = trip->distance_km * network->price_per_km;
-  create_plate(trip->trip_id, trip->plate, sizeof(trip->plate));
+  candidate.expected_toll = candidate.distance_km * network->price_per_km;
+  create_plate(candidate.trip_id, candidate.plate, sizeof(candidate.plate));
+
+  snprintf(route, sizeof(route), "%s->%s",
+    network->entries[candidate.entry_index].id,
+    network->exits[candidate.exit_index].id);
+
+  if (!can_launch_trip(state, &candidate, &conflict, &conflict_progress_km)) {
+    snprintf(alert_msg, sizeof(alert_msg),
+      "Launch blocked: route %s already occupied too close to origin (%dkm).",
+      route,
+      conflict_progress_km);
+    push_alert(state, "warning", alert_msg, candidate.plate, conflict ? conflict->plate : "n/a", route);
+    return 0;
+  }
+
+  trip = &state->trips[slot];
+  *trip = candidate;
+  state->next_trip_id++;
 
   state->active_trip_count++;
   return 0;
@@ -198,6 +298,16 @@ void simulation_write_json(FILE *out, const Network *network, const SimulationSt
       trip->total_ticks,
       trip->expected_toll);
     emitted++;
+  }
+  fprintf(out, "]");
+
+  fprintf(out, ",\"alerts\":[");
+  for (i = 0; i < state->alert_count; i++) {
+    const AlertEvent *a = &state->alerts[i];
+    if (i > 0) fprintf(out, ",");
+    fprintf(out,
+      "{\"tick\":%d,\"severity\":\"%s\",\"message\":\"%s\",\"planeA\":\"%s\",\"planeB\":\"%s\",\"route\":\"%s\"}",
+      a->tick, a->severity, a->message, a->plane_a, a->plane_b, a->route);
   }
   fprintf(out, "]");
 

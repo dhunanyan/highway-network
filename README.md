@@ -11,21 +11,25 @@ Local machine highway toll-network simulator with shared live state.
 ## Run
 
 1. Build:
+
 ```bash
 make build
 ```
 
 2. Start daemon (terminal 1):
+
 ```bash
-make run-daemon
+make run-simulator
 ```
 
 3. Start CLI monitor (terminal 2):
+
 ```bash
 make run-cli
 ```
 
 4. Start GUI (terminal 3):
+
 ```bash
 cd apps/gui
 npm start
@@ -38,6 +42,7 @@ Now both CLI and GUI interact with the same live state.
 UNIX socket: `build/highway-network.sock`
 
 Commands:
+
 - `STATE`
 - `TICK <n>`
 - `RESET`

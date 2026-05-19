@@ -7,6 +7,7 @@ const exits = document.getElementById("exits");
 const trips = document.getElementById("trips");
 const statusEl = document.getElementById("status");
 const trafficMap = document.getElementById("trafficMap");
+const alertsEl = document.getElementById("alerts");
 
 const btnTick1 = document.getElementById("tick1");
 const btnTick5 = document.getElementById("tick5");
@@ -46,6 +47,28 @@ function tollColor(toll) {
   if (toll < 80) return "#34d399";
   if (toll <= 160) return "#f59e0b";
   return "#ef4444";
+}
+
+function renderAlerts(state) {
+  const alerts = Array.isArray(state?.alerts) ? state.alerts : [];
+  alertsEl.innerHTML = "";
+  if (!alerts.length) {
+    alertsEl.innerHTML = '<div class="small">No collision warnings. Launch safety checks are green.</div>';
+    return;
+  }
+
+  alerts
+    .slice()
+    .reverse()
+    .forEach((a) => {
+      const item = document.createElement("div");
+      item.className = "alert-item";
+      item.innerHTML = `
+        <span class="alert-icon">⚠</span>
+        <span>[t=${a.tick}] ${escapeHtml(a.message)} Route=${escapeHtml(a.route)} Candidate=${escapeHtml(a.planeA)} Blocking=${escapeHtml(a.planeB)}</span>
+      `;
+      alertsEl.appendChild(item);
+    });
 }
 
 function renderTrafficMap(state) {
@@ -111,13 +134,13 @@ function renderTrafficMap(state) {
     const routeGroupOffset = ((idx % 3) - 1) * 2;
     const offset = spread + routeGroupOffset;
 
-    const sx = start.x + normPx * offset;
-    const sy = start.y + normPy * offset;
-    const ex = end.x + normPx * offset;
-    const ey = end.y + normPy * offset;
+    const sx = start.x;
+    const sy = start.y;
+    const ex = end.x;
+    const ey = end.y;
 
-    const vx = sx + (ex - sx) * progress;
-    const vy = sy + (ey - sy) * progress;
+    const vx = sx + (ex - sx) * progress + normPx * offset;
+    const vy = sy + (ey - sy) * progress + normPy * offset;
     const color = tollColor(Number(t.toll || 0));
 
     svg += `
@@ -180,6 +203,7 @@ function render(state) {
   });
 
   renderTrafficMap(state);
+  renderAlerts(state);
 }
 
 async function refresh() {

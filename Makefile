@@ -10,17 +10,17 @@ COMMON_SRCS = \
   services/simulator/src/network_loader.c \
   services/simulator/src/simulator.c
 
-.PHONY: help build run-daemon run-cli run-gui clean
+.PHONY: help build run-simulator run-cli run-gui clean
 
 help:
-	@echo "Targets: build, run-daemon, run-cli, run-gui, clean"
+	@echo "Targets: build, run-simulator, run-cli, run-gui, clean"
 
 build:
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(INCLUDES) apps/cli/src/main.c -o $(CLI_APP)
 	$(CC) $(CFLAGS) $(INCLUDES) services/simulatord/src/main.c $(COMMON_SRCS) -o $(SIM_DAEMON)
 
-run-daemon: build
+run-simulator: build
 	./$(SIM_DAEMON) data/input/network.csv build/highway-network.sock
 
 run-cli: build

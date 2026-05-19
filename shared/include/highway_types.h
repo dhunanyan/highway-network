@@ -5,6 +5,7 @@
 #define MAX_NAME_LEN 64
 #define MAX_ID_LEN 16
 #define MAX_ACTIVE_TRIPS 256
+#define MAX_ALERTS 24
 
 typedef enum GateType {
   GATE_ENTRY = 0,
@@ -40,6 +41,15 @@ typedef struct Trip {
   double expected_toll;
 } Trip;
 
+typedef struct AlertEvent {
+  int tick;
+  char severity[16];
+  char message[192];
+  char plane_a[16];
+  char plane_b[16];
+  char route[48];
+} AlertEvent;
+
 typedef struct SimulationState {
   int tick;
   int next_trip_id;
@@ -47,6 +57,8 @@ typedef struct SimulationState {
   double total_revenue;
   Trip trips[MAX_ACTIVE_TRIPS];
   int active_trip_count;
+  AlertEvent alerts[MAX_ALERTS];
+  int alert_count;
 } SimulationState;
 
 #endif

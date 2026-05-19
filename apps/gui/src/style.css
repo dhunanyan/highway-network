@@ -80,6 +80,13 @@ table {
   width: 100%;
   border-collapse: collapse;
 }
+.trips-scroll {
+  max-height: 280px;
+  min-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
 th,
 td {
   border-bottom: 1px solid var(--line);
@@ -90,6 +97,28 @@ th {
   color: var(--muted);
 }
 .small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.status {
+  margin-top: 8px;
+  color: #fca5a5;
+  font-size: 13px;
+  min-height: 18px;
+}
+.map-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+#trafficMap {
+  width: 100%;
+  min-height: 360px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #0b1224 0%, #0f172a 100%);
+}
+.map-caption {
+  margin-top: 8px;
   color: var(--muted);
   font-size: 12px;
 }

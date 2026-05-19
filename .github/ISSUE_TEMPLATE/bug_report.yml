@@ -1,0 +1,57 @@
+name: Bug Report
+description: Report incorrect behavior, crashes, deadlocks, or race conditions.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please provide enough detail to reproduce it.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: List exact commands/input and order of actions.
+      placeholder: |
+        1. Run `...`
+        2. Start process `...`
+        3. Observe `...`
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, compiler, version, shell.
+      placeholder: |
+        OS:
+        Compiler:
+        Build command:
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Output
+      description: Paste relevant terminal output.
+      render: shell
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have searched existing issues.
+          required: true

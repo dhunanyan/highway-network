@@ -1,24 +1,46 @@
 # highway-network
 
-Local machine highway toll-network simulator with a terminal UI, implemented in C.
+Local machine highway toll-network simulator with shared live state.
 
-## Project Start Point
+## Components
 
-- Build: `make build`
-- Run: `make run`
+- `simulatord` (C): single source of truth for simulation state.
+- `CLI monitor` (C): terminal client connected to daemon.
+- `GUI app` (Electron): desktop visual client connected to daemon.
 
-The main executable is built as `build/highway-network`.
+## Run
 
-## Current Architecture
+1. Build:
+```bash
+make build
+```
 
-- `apps/desktop/src` - local UI application (terminal-based).
-- `services/simulator/src` - simulation logic and network data loader.
-- `services/simulator/include` - service headers.
-- `shared/include` - shared domain types.
-- `data/input/network.csv` - first sample data set.
+2. Start daemon (terminal 1):
+```bash
+make run-daemon
+```
 
-## Notes
+3. Start CLI monitor (terminal 2):
+```bash
+make run-cli
+```
 
-- This is intentionally local-first (no web app).
-- The simulator tracks entries/exits, active trips, and toll revenue.
-- Next UI upgrade path can be `ncurses`, SDL2, or Electron wrapper while preserving this C simulation service.
+4. Start GUI (terminal 3):
+```bash
+cd apps/gui
+npm start
+```
+
+Now both CLI and GUI interact with the same live state.
+
+## Socket Protocol
+
+UNIX socket: `build/highway-network.sock`
+
+Commands:
+- `STATE`
+- `TICK <n>`
+- `RESET`
+- `QUIT`
+
+Response: single-line JSON snapshot.

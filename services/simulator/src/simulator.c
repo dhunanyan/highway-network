@@ -142,3 +142,55 @@ void simulation_print_summary(const Network *network, const SimulationState *sta
     printf("No active trips right now.\n");
   }
 }
+
+void simulation_write_json(FILE *out, const Network *network, const SimulationState *state)
+{
+  int i;
+  int emitted = 0;
+
+  fprintf(out, "{");
+  fprintf(out, "\"networkName\":\"%s\",", network->name);
+  fprintf(out, "\"currency\":\"%s\",", network->currency);
+  fprintf(out, "\"pricePerKm\":%.2f,", network->price_per_km);
+  fprintf(out, "\"tick\":%d,", state->tick);
+  fprintf(out, "\"activeTripCount\":%d,", state->active_trip_count);
+  fprintf(out, "\"completedTrips\":%d,", state->completed_trips);
+  fprintf(out, "\"revenue\":%.2f,", state->total_revenue);
+
+  fprintf(out, "\"entries\":[");
+  for (i = 0; i < network->entry_count; i++) {
+    if (i > 0) fprintf(out, ",");
+    fprintf(out, "{\"id\":\"%s\",\"name\":\"%s\",\"km\":%d}",
+      network->entries[i].id, network->entries[i].name, network->entries[i].km);
+  }
+  fprintf(out, "],");
+
+  fprintf(out, "\"exits\":[");
+  for (i = 0; i < network->exit_count; i++) {
+    if (i > 0) fprintf(out, ",");
+    fprintf(out, "{\"id\":\"%s\",\"name\":\"%s\",\"km\":%d}",
+      network->exits[i].id, network->exits[i].name, network->exits[i].km);
+  }
+  fprintf(out, "],");
+
+  fprintf(out, "\"activeTrips\":[");
+  for (i = 0; i < MAX_ACTIVE_TRIPS; i++) {
+    const Trip *trip = &state->trips[i];
+    if (!trip->active) continue;
+    if (emitted > 0) fprintf(out, ",");
+    fprintf(out,
+      "{\"tripId\":%d,\"plate\":\"%s\",\"entryId\":\"%s\",\"exitId\":\"%s\",\"distanceKm\":%d,\"ticksLeft\":%d,\"toll\":%.2f}",
+      trip->trip_id,
+      trip->plate,
+      network->entries[trip->entry_index].id,
+      network->exits[trip->exit_index].id,
+      trip->distance_km,
+      trip->ticks_left,
+      trip->expected_toll);
+    emitted++;
+  }
+  fprintf(out, "]");
+
+  fprintf(out, "}\n");
+  fflush(out);
+}

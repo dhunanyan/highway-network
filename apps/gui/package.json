@@ -1,0 +1,12 @@
+{
+  "name": "@highway-network/gui",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^41.6.1"
+  }
+}

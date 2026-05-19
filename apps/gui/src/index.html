@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>highway-network GUI</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>highway-network</h1>
+      <div class="small">Desktop GUI + C simulator service</div>
+      <div id="status" class="status"></div>
+    </header>
+    <div class="container">
+      <section class="panel full">
+        <div class="controls">
+          <button id="tick1">Tick +1</button>
+          <button id="tick5">Tick +5</button>
+          <button id="tick20">Tick +20</button>
+          <button id="auto">Start Auto</button>
+          <button id="reset" class="danger">Reset</button>
+        </div>
+      </section>
+
+      <section class="panel full metrics">
+        <div class="metric">
+          <div class="label">Tick</div>
+          <div id="mTick" class="value">0</div>
+        </div>
+        <div class="metric">
+          <div class="label">Active Trips</div>
+          <div id="mActive" class="value">0</div>
+        </div>
+        <div class="metric">
+          <div class="label">Completed</div>
+          <div id="mCompleted" class="value">0</div>
+        </div>
+        <div class="metric">
+          <div class="label">Revenue</div>
+          <div id="mRevenue" class="value">0</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3>Entry Gates</h3>
+        <ul id="entries"></ul>
+      </section>
+
+      <section class="panel">
+        <h3>Exit Gates</h3>
+        <ul id="exits"></ul>
+      </section>
+
+      <section class="panel full">
+        <h3>Active Trips</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Plate</th>
+              <th>Entry</th>
+              <th>Exit</th>
+              <th>Km</th>
+              <th>Ticks Left</th>
+              <th>Toll</th>
+            </tr>
+          </thead>
+          <tbody id="trips"></tbody>
+        </table>
+      </section>
+    </div>
+
+    <script>
+      const mTick = document.getElementById("mTick");
+      const mActive = document.getElementById("mActive");
+      const mCompleted = document.getElementById("mCompleted");
+      const mRevenue = document.getElementById("mRevenue");
+      const entries = document.getElementById("entries");
+      const exits = document.getElementById("exits");
+      const trips = document.getElementById("trips");
+      const statusEl = document.getElementById("status");
+
+      const btnTick1 = document.getElementById("tick1");
+      const btnTick5 = document.getElementById("tick5");
+      const btnTick20 = document.getElementById("tick20");
+      const btnAuto = document.getElementById("auto");
+      const btnReset = document.getElementById("reset");
+
+      let autoTimer = null;
+      let pollTimer = null;
+
+      function render(state) {
+        if (!state) {
+          statusEl.textContent = "No response from simulator.";
+          return;
+        }
+        if (state.error) {
+          statusEl.textContent = `Simulator error: ${state.error}${state.details ? ` (${state.details})` : ""}`;
+          return;
+        }
+        statusEl.textContent = "";
+        mTick.textContent = state.tick;
+        mActive.textContent = state.activeTripCount;
+        mCompleted.textContent = state.completedTrips;
+        mRevenue.textContent = `${state.revenue.toFixed(2)} ${state.currency}`;
+
+        entries.innerHTML = "";
+        state.entries.forEach((g) => {
+          const li = document.createElement("li");
+          li.textContent = `${g.id} - ${g.name} (km ${g.km})`;
+          entries.appendChild(li);
+        });
+
+        exits.innerHTML = "";
+        state.exits.forEach((g) => {
+          const li = document.createElement("li");
+          li.textContent = `${g.id} - ${g.name} (km ${g.km})`;
+          exits.appendChild(li);
+        });
+
+        trips.innerHTML = "";
+        if (!state.activeTrips.length) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = '<td colspan="7" class="small">No active trips</td>';
+          trips.appendChild(tr);
+          return;
+        }
+
+        state.activeTrips.forEach((t) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${t.tripId}</td><td>${t.plate}</td><td>${t.entryId}</td><td>${t.exitId}</td><td>${t.distanceKm}</td><td>${t.ticksLeft}</td><td>${t.toll.toFixed(2)}</td>`;
+          trips.appendChild(tr);
+        });
+      }
+
+      async function refresh() {
+        render(await window.simApi.getState());
+      }
+
+      async function tick(steps) {
+        render(await window.simApi.tick(steps));
+      }
+
+      btnTick1.onclick = () => tick(1);
+      btnTick5.onclick = () => tick(5);
+      btnTick20.onclick = () => tick(20);
+      btnReset.onclick = async () => render(await window.simApi.reset());
+      btnAuto.onclick = () => {
+        if (autoTimer) {
+          clearInterval(autoTimer);
+          autoTimer = null;
+          btnAuto.textContent = "Start Auto";
+          return;
+        }
+        autoTimer = setInterval(() => tick(1), 700);
+        btnAuto.textContent = "Stop Auto";
+      };
+
+      refresh();
+      pollTimer = setInterval(() => {
+        refresh();
+      }, 800);
+
+      window.addEventListener("beforeunload", () => {
+        if (autoTimer) {
+          clearInterval(autoTimer);
+        }
+        if (pollTimer) {
+          clearInterval(pollTimer);
+        }
+      });
+    </script>
+  </body>
+</html>

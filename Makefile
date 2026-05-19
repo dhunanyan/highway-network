@@ -2,24 +2,32 @@ CC = gcc
 CFLAGS = -Wall -Wextra -std=c11
 INCLUDES = -Ishared/include -Iservices/simulator/include
 
-APP = build/highway-network
+BUILD_DIR = build
+CLI_APP = $(BUILD_DIR)/highway-network
+SIM_DAEMON = $(BUILD_DIR)/simulatord
 
-SRCS = \
-  apps/desktop/src/main.c \
+COMMON_SRCS = \
   services/simulator/src/network_loader.c \
   services/simulator/src/simulator.c
 
-.PHONY: help build run clean
+.PHONY: help build run-daemon run-cli run-gui clean
 
 help:
-	@echo "Targets: build, run, clean"
+	@echo "Targets: build, run-daemon, run-cli, run-gui, clean"
 
 build:
-	@mkdir -p build
-	$(CC) $(CFLAGS) $(INCLUDES) $(SRCS) -o $(APP)
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(INCLUDES) apps/cli/src/main.c -o $(CLI_APP)
+	$(CC) $(CFLAGS) $(INCLUDES) services/simulatord/src/main.c $(COMMON_SRCS) -o $(SIM_DAEMON)
 
-run: build
-	./$(APP)
+run-daemon: build
+	./$(SIM_DAEMON) data/input/network.csv build/highway-network.sock
+
+run-cli: build
+	./$(CLI_APP)
+
+run-gui: build
+	cd apps/gui && npm start
 
 clean:
-	rm -rf build
+	rm -rf $(BUILD_DIR)

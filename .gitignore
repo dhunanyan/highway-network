@@ -1,7 +1,28 @@
-build/
-dist/
-*.o
-*.so
-*.tar.gz
+# OS
 .DS_Store
+Thumbs.db
+
+# Editors/IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Local env files
+.env
+.env.*
+!.env.example
 .dev
+
+# Build artifacts
+build/
+*.o
+*.out
+
+# Logs/runtime
+*.log
+*.pid
+
+# Node leftovers (if any tooling is used later)
+node_modules/

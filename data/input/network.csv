@@ -1,0 +1,7 @@
+#type,id,name,km
+ENTRY,E_POZ,Poznan West,0
+ENTRY,E_LOD,Lodz North,180
+ENTRY,E_KRK,Krakow Ring,350
+EXIT,X_WRO,Wroclaw East,120
+EXIT,X_CZE,Czestochowa,270
+EXIT,X_KAT,Katowice,410

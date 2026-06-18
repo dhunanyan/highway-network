@@ -986,7 +986,10 @@ function renderStaticText() {
   document.documentElement.lang = currentLanguage;
   Object.entries(TEXT_IDS).forEach(([id, key]) => {
     const element = document.getElementById(id);
-    if (element) element.textContent = t(key);
+    if (!element) return;
+    const label = element.querySelector(".legend-label");
+    if (label) label.textContent = t(key);
+    else element.textContent = t(key);
   });
   btnTick1.textContent = t("buttons.tick1");
   btnTick5.textContent = t("buttons.tick5");

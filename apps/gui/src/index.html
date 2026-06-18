@@ -8,17 +8,33 @@
   </head>
   <body>
     <header>
-      <h1>highway-network</h1>
-      <div class="small">Desktop GUI + C simulator service</div>
+      <div class="header-row">
+        <div>
+          <h1>highway-network</h1>
+          <div id="headerSubtitle" class="small">Desktop GUI + C simulator service</div>
+        </div>
+        <div class="lang-switcher">
+          <button id="langToggle" class="lang-toggle" aria-haspopup="listbox" aria-expanded="false">
+            <span class="flag-en" aria-hidden="true"></span>
+          </button>
+          <div id="langMenu" class="lang-menu" role="listbox" aria-label="Language selector">
+            <button class="lang-option active" data-lang="en">English</button>
+            <button class="lang-option" data-lang="pl">Polski</button>
+            <button class="lang-option" data-lang="de">Deutsch</button>
+            <button class="lang-option" data-lang="fr">Français</button>
+            <button class="lang-option" data-lang="es">Español</button>
+          </div>
+        </div>
+      </div>
       <div id="status" class="status"></div>
     </header>
     <div class="container">
       <section class="panel full hero-panel">
         <div class="hero-row">
           <div>
-            <div class="eyebrow">Motorway Operations Console</div>
+            <div id="heroEyebrow" class="eyebrow">Motorway Operations Console</div>
             <h2 id="networkTitle">Poland Highway Monitoring Grid</h2>
-            <p id="networkSubtitle" class="hero-copy">
+            <p id="heroCopy" class="hero-copy">
               Real-time motorway surveillance with camera-derived vehicle identity,
               suspicious behavior warnings, and live corridor visibility.
             </p>
@@ -53,50 +69,50 @@
 
       <section class="panel full metrics">
         <div class="metric">
-          <div class="label">Tick</div>
+          <div id="metricTickLabel" class="label">Tick</div>
           <div id="mTick" class="value">0</div>
         </div>
         <div class="metric">
-          <div class="label">Active Cars</div>
+          <div id="metricActiveLabel" class="label">Active Cars</div>
           <div id="mActive" class="value">0</div>
         </div>
         <div class="metric">
-          <div class="label">Completed</div>
+          <div id="metricCompletedLabel" class="label">Completed</div>
           <div id="mCompleted" class="value">0</div>
         </div>
         <div class="metric">
-          <div class="label">Revenue</div>
+          <div id="metricRevenueLabel" class="label">Revenue</div>
           <div id="mRevenue" class="value">0</div>
         </div>
       </section>
 
       <section class="panel">
-        <h3>Road Health Matrix</h3>
+        <h3 id="roadHealthTitle">Road Health Matrix</h3>
         <div id="roadHealth" class="road-health-grid"></div>
       </section>
 
       <section class="panel">
-        <h3>Camera Watch</h3>
+        <h3 id="cameraWatchTitle">Camera Watch</h3>
         <div id="cameraWatch" class="camera-watch-grid"></div>
       </section>
 
       <section class="panel">
-        <h3>Revenue Mix</h3>
+        <h3 id="revenueMixTitle">Revenue Mix</h3>
         <div id="revenueMix" class="stack-stats"></div>
       </section>
 
       <section class="panel">
-        <h3>Fleet Intelligence</h3>
+        <h3 id="fleetIntelTitle">Fleet Intelligence</h3>
         <div id="fleetIntel" class="stack-stats"></div>
       </section>
 
       <section class="panel full">
         <div class="tab-header">
-          <h3>Command Center</h3>
+          <h3 id="commandCenterTitle">Command Center</h3>
           <div class="tabs">
-            <button class="tab-btn active" data-tab="overview">Overview</button>
-            <button class="tab-btn" data-tab="risk">Risk Radar</button>
-            <button class="tab-btn" data-tab="fleet">Fleet Watch</button>
+            <button id="tabOverviewBtn" class="tab-btn active" data-tab="overview">Overview</button>
+            <button id="tabRiskBtn" class="tab-btn" data-tab="risk">Risk Radar</button>
+            <button id="tabFleetBtn" class="tab-btn" data-tab="fleet">Fleet Watch</button>
           </div>
         </div>
         <div id="tab-overview" class="tab-panel active">
@@ -111,28 +127,28 @@
       </section>
 
       <section class="panel">
-        <h3>Entry Gates</h3>
+        <h3 id="entryGatesTitle">Entry Gates</h3>
         <ul id="entries"></ul>
       </section>
 
       <section class="panel">
-        <h3>Exit Gates</h3>
+        <h3 id="exitGatesTitle">Exit Gates</h3>
         <ul id="exits"></ul>
       </section>
 
       <section class="panel full">
-        <h3>Active Cars</h3>
+        <h3 id="activeCarsTitle">Active Cars</h3>
         <div class="trips-scroll">
           <table>
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Plate</th>
-                <th>Entry</th>
-                <th>Exit</th>
-                <th>Km</th>
-                <th>Ticks Left</th>
-                <th>Toll</th>
+                <th id="thId">ID</th>
+                <th id="thPlate">Plate</th>
+                <th id="thEntry">Entry</th>
+                <th id="thExit">Exit</th>
+                <th id="thKm">Km</th>
+                <th id="thTicksLeft">Ticks Left</th>
+                <th id="thToll">Toll</th>
               </tr>
             </thead>
             <tbody id="trips"></tbody>
@@ -141,7 +157,7 @@
       </section>
 
       <section class="panel full">
-        <h3>Live Traffic Map</h3>
+        <h3 id="trafficMapTitle">Live Traffic Map</h3>
         <div class="map-wrap">
           <svg
             id="trafficMap"
@@ -149,33 +165,33 @@
             preserveAspectRatio="xMidYMid meet"
           ></svg>
         </div>
-        <div class="map-caption">
+        <div id="mapCaption" class="map-caption">
           Abstract motorway topology map. Road hubs show connectivity, and cars
           animate from entry gate -> motorway hub -> exit gate.
         </div>
         <div class="legend">
-          <div class="legend-item">
+          <div id="legendConnected" class="legend-item">
             <span class="legend-dot" style="background: #1d4ed8"></span>
             Connected Autostrada Hub
           </div>
-          <div class="legend-item">
+          <div id="legendDisconnected" class="legend-item">
             <span class="legend-dot" style="background: #7c3aed"></span>
             Disconnected Autostrada Hub
           </div>
-          <div class="legend-item">
+          <div id="legendEntry" class="legend-item">
             <span class="legend-dot" style="background: #34d399"></span>
             Entry Camera Gate
           </div>
-          <div class="legend-item">
+          <div id="legendExit" class="legend-item">
             <span class="legend-dot" style="background: #f97316"></span>
             Exit Camera Gate
           </div>
-          <div class="legend-item">
+          <div id="legendWarning" class="legend-item">
             <span class="legend-dot" style="background: #ef4444"></span>
             Speeding / Suspicious Path Warning
           </div>
         </div>
-        <h4>Suspicious Behavior Warnings</h4>
+        <h4 id="alertsTitle">Suspicious Behavior Warnings</h4>
         <div id="alerts" class="alerts"></div>
       </section>
     </div>

@@ -21,6 +21,9 @@ const overviewBoard = document.getElementById("overviewBoard");
 const riskBoard = document.getElementById("riskBoard");
 const fleetBoard = document.getElementById("fleetBoard");
 const tabButtons = [...document.querySelectorAll(".tab-btn")];
+const langToggle = document.getElementById("langToggle");
+const langMenu = document.getElementById("langMenu");
+const langOptions = [...document.querySelectorAll(".lang-option")];
 
 const btnTick1 = document.getElementById("tick1");
 const btnTick5 = document.getElementById("tick5");
@@ -28,8 +31,46 @@ const btnTick20 = document.getElementById("tick20");
 const btnAuto = document.getElementById("auto");
 const btnReset = document.getElementById("reset");
 
+const TEXT_IDS = {
+  headerSubtitle: "header.subtitle",
+  heroEyebrow: "hero.eyebrow",
+  heroCopy: "hero.copy",
+  metricTickLabel: "metrics.tick",
+  metricActiveLabel: "metrics.activeCars",
+  metricCompletedLabel: "metrics.completed",
+  metricRevenueLabel: "metrics.revenue",
+  roadHealthTitle: "sections.roadHealth",
+  cameraWatchTitle: "sections.cameraWatch",
+  revenueMixTitle: "sections.revenueMix",
+  fleetIntelTitle: "sections.fleetIntel",
+  commandCenterTitle: "sections.commandCenter",
+  tabOverviewBtn: "tabs.overview",
+  tabRiskBtn: "tabs.risk",
+  tabFleetBtn: "tabs.fleet",
+  entryGatesTitle: "sections.entryGates",
+  exitGatesTitle: "sections.exitGates",
+  activeCarsTitle: "sections.activeCars",
+  thId: "table.id",
+  thPlate: "table.plate",
+  thEntry: "table.entry",
+  thExit: "table.exit",
+  thKm: "table.km",
+  thTicksLeft: "table.ticksLeft",
+  thToll: "table.toll",
+  trafficMapTitle: "sections.trafficMap",
+  mapCaption: "map.caption",
+  legendConnected: "map.legend.connected",
+  legendDisconnected: "map.legend.disconnected",
+  legendEntry: "map.legend.entry",
+  legendExit: "map.legend.exit",
+  legendWarning: "map.legend.warning",
+  alertsTitle: "sections.alerts"
+};
+
 let autoTimer = null;
 let pollTimer = null;
+let currentState = null;
+let currentLanguage = localStorage.getItem("highway-network-language") || "en";
 
 const ROAD_CONNECTIONS = [
   ["A1", "A2"],
@@ -47,6 +88,444 @@ const ROAD_POSITIONS = {
   A18: { x: 860, y: 280 },
   A6: { x: 250, y: 280 },
   A50: { x: 560, y: 300 }
+};
+
+const TRANSLATIONS = {
+  en: {
+    languageName: "English",
+    header: { subtitle: "Desktop GUI + C simulator service" },
+    buttons: { tick1: "Tick +1", tick5: "Tick +5", tick20: "Tick +20", startAuto: "Start Auto", stopAuto: "Stop Auto", reset: "Reset" },
+    hero: {
+      eyebrow: "Motorway Operations Console",
+      networkName: "Poland Highway Monitoring Grid",
+      copy: "Real-time motorway surveillance with camera-derived vehicle identity, suspicious behavior warnings, and live corridor visibility.",
+      roadsBadge: "{count} roads",
+      camerasBadge: "{count} cameras",
+      activeBadge: "{count} active",
+      priorityWarning: "Priority Warning",
+      networkStatus: "Network Status",
+      warningDetectedSuffix: "detected on {route}.",
+      warningVehicle: "Vehicle {vehicle} · {make} {model} · Camera {camera}",
+      stableHeadline: "Stable flow.",
+      stableCopy: "No suspicious driving events currently flagged by motorway cameras.",
+      stableSubcopy: "The console is tracking toll flow, camera identity, route occupancy, and suspicious travel patterns."
+    },
+    metrics: { tick: "Tick", activeCars: "Active Cars", completed: "Completed", revenue: "Revenue" },
+    sections: {
+      roadHealth: "Road Health Matrix",
+      cameraWatch: "Camera Watch",
+      revenueMix: "Revenue Mix",
+      fleetIntel: "Fleet Intelligence",
+      commandCenter: "Command Center",
+      entryGates: "Entry Gates",
+      exitGates: "Exit Gates",
+      activeCars: "Active Cars",
+      trafficMap: "Live Traffic Map",
+      alerts: "Suspicious Behavior Warnings"
+    },
+    tabs: { overview: "Overview", risk: "Risk Radar", fleet: "Fleet Watch" },
+    table: { id: "ID", plate: "Plate", entry: "Entry", exit: "Exit", km: "Km", ticksLeft: "Ticks Left", toll: "Toll" },
+    map: {
+      caption: "Abstract motorway topology map. Road hubs show connectivity, and cars animate from entry gate -> motorway hub -> exit gate.",
+      noActiveCars: "No active cars on the network",
+      legend: {
+        connected: "Connected Autostrada Hub",
+        disconnected: "Disconnected Autostrada Hub",
+        entry: "Entry Camera Gate",
+        exit: "Exit Camera Gate",
+        warning: "Speeding / Suspicious Path Warning"
+      }
+    },
+    roadHealth: { stable: "Stable", watch: "Watch", hot: "Hot", active: "active", warnings: "warnings", avg: "avg" },
+    cameraWatch: { flagged: "Flagged road", clear: "Clear feed", road: "Road", lane: "Lane", entry: "Entry", exit: "Exit" },
+    revenueMix: { low: "Low toll corridors", medium: "Medium toll corridors", high: "High toll corridors", total: "Total collected" },
+    fleetIntel: { avgSpeed: "Avg live speed", dominantMake: "Dominant make", dominantColor: "Dominant color", warningDensity: "Warning density" },
+    commandCenter: {
+      networkPosture: "Network Posture",
+      mostPressured: "Most Pressured Road",
+      cameraCoverage: "Camera Coverage",
+      latestWarnings: "Latest Warnings",
+      riskHeuristic: "Risk Heuristic",
+      operatorNote: "Operator Note",
+      fastestCars: "Fastest Live Cars",
+      identityDepth: "Identity Depth",
+      flowCharacter: "Flow Character",
+      denseFlow: "Dense motorway flow across primary corridors.",
+      moderateFlow: "Moderate motorway load with room for throughput growth.",
+      noHotRoad: "No hot corridor right now.",
+      hotRoad: "{road} with {count} warnings",
+      coverageText: "{count} active gate cameras across {roads} motorway corridors.",
+      noWarnings: "No warnings",
+      escalated: "Escalated monitoring recommended on high-speed corridors.",
+      tolerance: "Warning volume remains inside expected tolerance.",
+      operatorText: "Repeated speeding on the same road is the clearest signal for targeted enforcement placement.",
+      noActiveCars: "No active cars",
+      identityText: "Plate, make, model, color, road, route, camera source, and live toll are currently tracked per active car.",
+      mixedFlow: "Mixed private and long-distance motorway traffic profile.",
+      lowFlow: "Low-volume motorway stream with cleaner camera observability."
+    },
+    alerts: {
+      none: "No suspicious behavior warnings.",
+      labelCar: "Car",
+      labelCamera: "Camera",
+      labelSpeed: "Speed",
+      labelLimit: "Limit",
+      labelRoute: "Route"
+    },
+    entries: { none: "No entry gates" },
+    exits: { none: "No exit gates" },
+    trips: { none: "No active cars" },
+    status: { noResponse: "No response from simulator.", error: "Simulator error: {error}{details}" },
+    misc: { unknownRoute: "unknown route", currency: "PLN", nA: "n/a", noData: "n/a" }
+  },
+  pl: {
+    languageName: "Polski",
+    header: { subtitle: "Desktop GUI + usługa symulatora w C" },
+    buttons: { tick1: "Tick +1", tick5: "Tick +5", tick20: "Tick +20", startAuto: "Start Auto", stopAuto: "Stop Auto", reset: "Reset" },
+    hero: {
+      eyebrow: "Konsola Operacyjna Autostrad",
+      networkName: "Polska Sieć Monitoringu Autostrad",
+      copy: "Monitorowanie autostrad w czasie rzeczywistym z identyfikacją pojazdów z kamer, ostrzeżeniami o podejrzanych zachowaniach i widocznością korytarzy ruchu.",
+      roadsBadge: "{count} dróg",
+      camerasBadge: "{count} kamer",
+      activeBadge: "{count} aktywnych",
+      priorityWarning: "Priorytetowe Ostrzeżenie",
+      networkStatus: "Stan Sieci",
+      warningDetectedSuffix: "wykryto na trasie {route}.",
+      warningVehicle: "Pojazd {vehicle} · {make} {model} · Kamera {camera}",
+      stableHeadline: "Ruch stabilny.",
+      stableCopy: "Kamery autostradowe nie zgłaszają obecnie podejrzanych zdarzeń.",
+      stableSubcopy: "Konsola śledzi opłaty, tożsamość z kamer, obciążenie tras i podejrzane wzorce przejazdu."
+    },
+    metrics: { tick: "Tick", activeCars: "Aktywne Auta", completed: "Zakończone", revenue: "Przychód" },
+    sections: {
+      roadHealth: "Stan Dróg",
+      cameraWatch: "Podgląd Kamer",
+      revenueMix: "Struktura Opłat",
+      fleetIntel: "Analiza Floty",
+      commandCenter: "Centrum Dowodzenia",
+      entryGates: "Bramki Wjazdowe",
+      exitGates: "Bramki Zjazdowe",
+      activeCars: "Aktywne Auta",
+      trafficMap: "Mapa Ruchu Na Żywo",
+      alerts: "Ostrzeżenia o Podejrzanym Zachowaniu"
+    },
+    tabs: { overview: "Przegląd", risk: "Radar Ryzyka", fleet: "Obserwacja Floty" },
+    table: { id: "ID", plate: "Tablica", entry: "Wjazd", exit: "Zjazd", km: "Km", ticksLeft: "Pozostałe Ticki", toll: "Opłata" },
+    map: {
+      caption: "Abstrakcyjna mapa topologii autostrad. Węzły dróg pokazują połączenia, a auta przemieszczają się od bramki wjazdowej przez węzeł do bramki zjazdowej.",
+      noActiveCars: "Brak aktywnych aut w sieci",
+      legend: {
+        connected: "Połączony Węzeł Autostrady",
+        disconnected: "Niepołączony Węzeł Autostrady",
+        entry: "Brama Kamery Wjazdowej",
+        exit: "Brama Kamery Zjazdowej",
+        warning: "Przekroczenie Prędkości / Podejrzana Trasa"
+      }
+    },
+    roadHealth: { stable: "Stabilnie", watch: "Obserwuj", hot: "Gorąco", active: "aktywnych", warnings: "ostrzeżeń", avg: "śr." },
+    cameraWatch: { flagged: "Droga oznaczona", clear: "Kanał czysty", road: "Droga", lane: "Pas", entry: "Wjazd", exit: "Wyjazd" },
+    revenueMix: { low: "Niskie opłaty", medium: "Średnie opłaty", high: "Wysokie opłaty", total: "Łącznie zebrano" },
+    fleetIntel: { avgSpeed: "Średnia prędkość", dominantMake: "Dominująca marka", dominantColor: "Dominujący kolor", warningDensity: "Gęstość ostrzeżeń" },
+    commandCenter: {
+      networkPosture: "Stan Sieci",
+      mostPressured: "Najbardziej Obciążona Droga",
+      cameraCoverage: "Pokrycie Kamer",
+      latestWarnings: "Najnowsze Ostrzeżenia",
+      riskHeuristic: "Heurystyka Ryzyka",
+      operatorNote: "Notatka Operatora",
+      fastestCars: "Najszybsze Auta",
+      identityDepth: "Zakres Identyfikacji",
+      flowCharacter: "Charakter Ruchu",
+      denseFlow: "Duże natężenie ruchu na głównych korytarzach.",
+      moderateFlow: "Umiarkowane obciążenie autostrad z zapasem przepustowości.",
+      noHotRoad: "Brak obecnie gorącego korytarza.",
+      hotRoad: "{road} z liczbą ostrzeżeń: {count}",
+      coverageText: "{count} aktywnych kamer bramkowych na {roads} korytarzach autostradowych.",
+      noWarnings: "Brak ostrzeżeń",
+      escalated: "Zalecany wzmożony nadzór na szybkich korytarzach.",
+      tolerance: "Liczba ostrzeżeń mieści się w oczekiwanym zakresie.",
+      operatorText: "Powtarzające się przekroczenia prędkości na tej samej drodze to najmocniejszy sygnał do ustawienia kontroli.",
+      noActiveCars: "Brak aktywnych aut",
+      identityText: "Dla każdego aktywnego auta śledzone są: tablica, marka, model, kolor, droga, trasa, kamera źródłowa i opłata.",
+      mixedFlow: "Mieszany profil ruchu prywatnego i dalekobieżnego.",
+      lowFlow: "Niski wolumen ruchu z lepszą obserwowalnością kamer."
+    },
+    alerts: {
+      none: "Brak ostrzeżeń o podejrzanym zachowaniu.",
+      labelCar: "Auto",
+      labelCamera: "Kamera",
+      labelSpeed: "Prędkość",
+      labelLimit: "Limit",
+      labelRoute: "Trasa"
+    },
+    entries: { none: "Brak bramek wjazdowych" },
+    exits: { none: "Brak bramek zjazdowych" },
+    trips: { none: "Brak aktywnych aut" },
+    status: { noResponse: "Brak odpowiedzi z symulatora.", error: "Błąd symulatora: {error}{details}" },
+    misc: { unknownRoute: "nieznana trasa", currency: "PLN", nA: "brak", noData: "brak" }
+  },
+  de: {
+    languageName: "Deutsch",
+    header: { subtitle: "Desktop-GUI + Simulatordienst in C" },
+    buttons: { tick1: "Tick +1", tick5: "Tick +5", tick20: "Tick +20", startAuto: "Auto Start", stopAuto: "Auto Stopp", reset: "Zurücksetzen" },
+    hero: {
+      eyebrow: "Autobahn-Leitstelle",
+      networkName: "Polnisches Autobahn-Monitoring",
+      copy: "Echtzeitüberwachung der Autobahnen mit kamerabasierter Fahrzeugidentifikation, Warnungen bei auffälligem Verhalten und Sichtbarkeit der Korridore.",
+      roadsBadge: "{count} Straßen",
+      camerasBadge: "{count} Kameras",
+      activeBadge: "{count} aktiv",
+      priorityWarning: "Prioritätswarnung",
+      networkStatus: "Netzstatus",
+      warningDetectedSuffix: "auf {route} erkannt.",
+      warningVehicle: "Fahrzeug {vehicle} · {make} {model} · Kamera {camera}",
+      stableHeadline: "Stabiler Fluss.",
+      stableCopy: "Derzeit werden keine verdächtigen Fahrereignisse von den Autobahnkameras markiert.",
+      stableSubcopy: "Die Konsole verfolgt Mautfluss, Kameraidentität, Routenbelegung und verdächtige Fahrmuster."
+    },
+    metrics: { tick: "Tick", activeCars: "Aktive Autos", completed: "Abgeschlossen", revenue: "Erlös" },
+    sections: {
+      roadHealth: "Straßenzustand",
+      cameraWatch: "Kameraüberblick",
+      revenueMix: "Mautmix",
+      fleetIntel: "Flottenanalyse",
+      commandCenter: "Leitstand",
+      entryGates: "Einfahrtskameras",
+      exitGates: "Ausfahrtskameras",
+      activeCars: "Aktive Autos",
+      trafficMap: "Live-Verkehrskarte",
+      alerts: "Warnungen bei Verdächtigem Verhalten"
+    },
+    tabs: { overview: "Übersicht", risk: "Risikoradar", fleet: "Flottenblick" },
+    table: { id: "ID", plate: "Kennzeichen", entry: "Einfahrt", exit: "Ausfahrt", km: "Km", ticksLeft: "Ticks Übrig", toll: "Maut" },
+    map: {
+      caption: "Abstrakte Topologiekarte des Autobahnnetzes. Straßenknoten zeigen Verbindungen, und Autos bewegen sich vom Einfahrtstor über den Knoten zum Ausfahrtstor.",
+      noActiveCars: "Keine aktiven Autos im Netz",
+      legend: {
+        connected: "Verbundener Autobahnknoten",
+        disconnected: "Nicht verbundener Autobahnknoten",
+        entry: "Einfahrtskamera",
+        exit: "Ausfahrtskamera",
+        warning: "Geschwindigkeit / Verdächtige Route"
+      }
+    },
+    roadHealth: { stable: "Stabil", watch: "Beobachten", hot: "Heiß", active: "aktiv", warnings: "Warnungen", avg: "Ø" },
+    cameraWatch: { flagged: "Markierte Straße", clear: "Klarer Feed", road: "Straße", lane: "Spur", entry: "Einfahrt", exit: "Ausfahrt" },
+    revenueMix: { low: "Niedrige Maut", medium: "Mittlere Maut", high: "Hohe Maut", total: "Gesamtbetrag" },
+    fleetIntel: { avgSpeed: "Ø Live-Geschwindigkeit", dominantMake: "Häufigste Marke", dominantColor: "Häufigste Farbe", warningDensity: "Warnungsdichte" },
+    commandCenter: {
+      networkPosture: "Netzlage",
+      mostPressured: "Am Stärksten Belastete Straße",
+      cameraCoverage: "Kameraabdeckung",
+      latestWarnings: "Neueste Warnungen",
+      riskHeuristic: "Risikoheuristik",
+      operatorNote: "Operator-Hinweis",
+      fastestCars: "Schnellste Autos",
+      identityDepth: "Identitätstiefe",
+      flowCharacter: "Verkehrscharakter",
+      denseFlow: "Dichter Autobahnverkehr auf Primärkorridoren.",
+      moderateFlow: "Mittlere Auslastung mit Spielraum für mehr Durchsatz.",
+      noHotRoad: "Derzeit kein kritischer Korridor.",
+      hotRoad: "{road} mit {count} Warnungen",
+      coverageText: "{count} aktive Kameratore über {roads} Autobahnkorridore.",
+      noWarnings: "Keine Warnungen",
+      escalated: "Verstärkte Überwachung auf schnellen Korridoren empfohlen.",
+      tolerance: "Das Warnvolumen liegt im erwarteten Bereich.",
+      operatorText: "Wiederholtes Rasen auf derselben Straße ist das stärkste Signal für gezielte Kontrollen.",
+      noActiveCars: "Keine aktiven Autos",
+      identityText: "Kennzeichen, Marke, Modell, Farbe, Straße, Route, Kameraquelle und Live-Maut werden pro aktivem Auto verfolgt.",
+      mixedFlow: "Gemischtes Profil aus Privat- und Fernverkehr.",
+      lowFlow: "Niedriges Verkehrsaufkommen mit besserer Kamerabeobachtung."
+    },
+    alerts: {
+      none: "Keine Warnungen zu verdächtigem Verhalten.",
+      labelCar: "Auto",
+      labelCamera: "Kamera",
+      labelSpeed: "Geschwindigkeit",
+      labelLimit: "Limit",
+      labelRoute: "Route"
+    },
+    entries: { none: "Keine Einfahrtskameras" },
+    exits: { none: "Keine Ausfahrtskameras" },
+    trips: { none: "Keine aktiven Autos" },
+    status: { noResponse: "Keine Antwort vom Simulator.", error: "Simulatorfehler: {error}{details}" },
+    misc: { unknownRoute: "unbekannte Route", currency: "PLN", nA: "k. A.", noData: "k. A." }
+  },
+  fr: {
+    languageName: "Français",
+    header: { subtitle: "Interface desktop + service simulateur en C" },
+    buttons: { tick1: "Tick +1", tick5: "Tick +5", tick20: "Tick +20", startAuto: "Démarrer Auto", stopAuto: "Arrêter Auto", reset: "Réinitialiser" },
+    hero: {
+      eyebrow: "Console d’Exploitation Autoroutière",
+      networkName: "Réseau de Surveillance des Autoroutes Polonaises",
+      copy: "Surveillance autoroutière en temps réel avec identification des véhicules par caméra, alertes de comportements suspects et visibilité des corridors.",
+      roadsBadge: "{count} routes",
+      camerasBadge: "{count} caméras",
+      activeBadge: "{count} actives",
+      priorityWarning: "Alerte Prioritaire",
+      networkStatus: "État du Réseau",
+      warningDetectedSuffix: "détecté sur {route}.",
+      warningVehicle: "Véhicule {vehicle} · {make} {model} · Caméra {camera}",
+      stableHeadline: "Flux stable.",
+      stableCopy: "Aucun comportement suspect n’est actuellement signalé par les caméras autoroutières.",
+      stableSubcopy: "La console suit les péages, l’identité caméra, l’occupation des routes et les schémas de trajet suspects."
+    },
+    metrics: { tick: "Tick", activeCars: "Voitures Actives", completed: "Terminés", revenue: "Revenu" },
+    sections: {
+      roadHealth: "État des Routes",
+      cameraWatch: "Surveillance Caméras",
+      revenueMix: "Répartition des Péages",
+      fleetIntel: "Analyse de Flotte",
+      commandCenter: "Centre de Commande",
+      entryGates: "Portes d’Entrée",
+      exitGates: "Portes de Sortie",
+      activeCars: "Voitures Actives",
+      trafficMap: "Carte du Trafic en Direct",
+      alerts: "Alertes de Comportement Suspect"
+    },
+    tabs: { overview: "Vue Générale", risk: "Radar de Risque", fleet: "Suivi de Flotte" },
+    table: { id: "ID", plate: "Plaque", entry: "Entrée", exit: "Sortie", km: "Km", ticksLeft: "Ticks Restants", toll: "Péage" },
+    map: {
+      caption: "Carte topologique abstraite du réseau autoroutier. Les nœuds montrent la connectivité, et les voitures vont de la porte d’entrée au nœud autoroutier puis à la sortie.",
+      noActiveCars: "Aucune voiture active sur le réseau",
+      legend: {
+        connected: "Nœud Autoroutier Connecté",
+        disconnected: "Nœud Autoroutier Déconnecté",
+        entry: "Porte Caméra d’Entrée",
+        exit: "Porte Caméra de Sortie",
+        warning: "Excès de Vitesse / Trajet Suspect"
+      }
+    },
+    roadHealth: { stable: "Stable", watch: "Surveiller", hot: "Critique", active: "actives", warnings: "alertes", avg: "moy." },
+    cameraWatch: { flagged: "Route signalée", clear: "Flux clair", road: "Route", lane: "Voie", entry: "Entrée", exit: "Sortie" },
+    revenueMix: { low: "Péages faibles", medium: "Péages moyens", high: "Péages élevés", total: "Total collecté" },
+    fleetIntel: { avgSpeed: "Vitesse moyenne", dominantMake: "Marque dominante", dominantColor: "Couleur dominante", warningDensity: "Densité d’alertes" },
+    commandCenter: {
+      networkPosture: "Posture du Réseau",
+      mostPressured: "Route la Plus Sous Pression",
+      cameraCoverage: "Couverture Caméra",
+      latestWarnings: "Dernières Alertes",
+      riskHeuristic: "Heuristique de Risque",
+      operatorNote: "Note Opérateur",
+      fastestCars: "Voitures les Plus Rapides",
+      identityDepth: "Profondeur d’Identification",
+      flowCharacter: "Caractère du Flux",
+      denseFlow: "Trafic dense sur les principaux corridors autoroutiers.",
+      moderateFlow: "Charge autoroutière modérée avec marge de débit.",
+      noHotRoad: "Aucun corridor critique pour le moment.",
+      hotRoad: "{road} avec {count} alertes",
+      coverageText: "{count} caméras de porte actives sur {roads} corridors autoroutiers.",
+      noWarnings: "Aucune alerte",
+      escalated: "Surveillance renforcée recommandée sur les corridors rapides.",
+      tolerance: "Le volume d’alertes reste dans la tolérance attendue.",
+      operatorText: "Les excès de vitesse répétés sur la même route sont le meilleur signal pour un contrôle ciblé.",
+      noActiveCars: "Aucune voiture active",
+      identityText: "Plaque, marque, modèle, couleur, route, trajet, source caméra et péage en direct sont suivis pour chaque voiture active.",
+      mixedFlow: "Profil mixte de circulation privée et longue distance.",
+      lowFlow: "Flux faible avec une meilleure observabilité caméra."
+    },
+    alerts: {
+      none: "Aucune alerte de comportement suspect.",
+      labelCar: "Voiture",
+      labelCamera: "Caméra",
+      labelSpeed: "Vitesse",
+      labelLimit: "Limite",
+      labelRoute: "Trajet"
+    },
+    entries: { none: "Aucune porte d’entrée" },
+    exits: { none: "Aucune porte de sortie" },
+    trips: { none: "Aucune voiture active" },
+    status: { noResponse: "Aucune réponse du simulateur.", error: "Erreur du simulateur : {error}{details}" },
+    misc: { unknownRoute: "trajet inconnu", currency: "PLN", nA: "n/d", noData: "n/d" }
+  },
+  es: {
+    languageName: "Español",
+    header: { subtitle: "GUI de escritorio + servicio simulador en C" },
+    buttons: { tick1: "Tick +1", tick5: "Tick +5", tick20: "Tick +20", startAuto: "Iniciar Auto", stopAuto: "Detener Auto", reset: "Reiniciar" },
+    hero: {
+      eyebrow: "Consola de Operaciones de Autopistas",
+      networkName: "Red Polaca de Monitorización de Autopistas",
+      copy: "Vigilancia de autopistas en tiempo real con identificación de vehículos por cámara, alertas de comportamiento sospechoso y visibilidad de corredores.",
+      roadsBadge: "{count} carreteras",
+      camerasBadge: "{count} cámaras",
+      activeBadge: "{count} activas",
+      priorityWarning: "Alerta Prioritaria",
+      networkStatus: "Estado de la Red",
+      warningDetectedSuffix: "detectado en {route}.",
+      warningVehicle: "Vehículo {vehicle} · {make} {model} · Cámara {camera}",
+      stableHeadline: "Flujo estable.",
+      stableCopy: "Actualmente no hay eventos de conducción sospechosa marcados por las cámaras de autopista.",
+      stableSubcopy: "La consola rastrea peajes, identidad de cámara, ocupación de rutas y patrones sospechosos de viaje."
+    },
+    metrics: { tick: "Tick", activeCars: "Coches Activos", completed: "Completados", revenue: "Ingresos" },
+    sections: {
+      roadHealth: "Estado de Carreteras",
+      cameraWatch: "Vigilancia de Cámaras",
+      revenueMix: "Distribución de Peajes",
+      fleetIntel: "Inteligencia de Flota",
+      commandCenter: "Centro de Mando",
+      entryGates: "Puertas de Entrada",
+      exitGates: "Puertas de Salida",
+      activeCars: "Coches Activos",
+      trafficMap: "Mapa de Tráfico en Vivo",
+      alerts: "Alertas de Comportamiento Sospechoso"
+    },
+    tabs: { overview: "Resumen", risk: "Radar de Riesgo", fleet: "Vigilancia de Flota" },
+    table: { id: "ID", plate: "Matrícula", entry: "Entrada", exit: "Salida", km: "Km", ticksLeft: "Ticks Restantes", toll: "Peaje" },
+    map: {
+      caption: "Mapa topológico abstracto de autopistas. Los nodos muestran conectividad y los coches se animan desde la entrada al nodo y luego a la salida.",
+      noActiveCars: "No hay coches activos en la red",
+      legend: {
+        connected: "Nodo de Autopista Conectado",
+        disconnected: "Nodo de Autopista Desconectado",
+        entry: "Puerta de Cámara de Entrada",
+        exit: "Puerta de Cámara de Salida",
+        warning: "Exceso de Velocidad / Ruta Sospechosa"
+      }
+    },
+    roadHealth: { stable: "Estable", watch: "Vigilar", hot: "Crítico", active: "activos", warnings: "alertas", avg: "prom." },
+    cameraWatch: { flagged: "Carretera marcada", clear: "Señal limpia", road: "Carretera", lane: "Carril", entry: "Entrada", exit: "Salida" },
+    revenueMix: { low: "Peajes bajos", medium: "Peajes medios", high: "Peajes altos", total: "Total recaudado" },
+    fleetIntel: { avgSpeed: "Velocidad media", dominantMake: "Marca dominante", dominantColor: "Color dominante", warningDensity: "Densidad de alertas" },
+    commandCenter: {
+      networkPosture: "Postura de la Red",
+      mostPressured: "Carretera Más Presionada",
+      cameraCoverage: "Cobertura de Cámaras",
+      latestWarnings: "Últimas Alertas",
+      riskHeuristic: "Heurística de Riesgo",
+      operatorNote: "Nota del Operador",
+      fastestCars: "Coches Más Rápidos",
+      identityDepth: "Profundidad de Identidad",
+      flowCharacter: "Carácter del Flujo",
+      denseFlow: "Flujo denso en los corredores principales.",
+      moderateFlow: "Carga moderada con margen para más capacidad.",
+      noHotRoad: "No hay corredor crítico ahora mismo.",
+      hotRoad: "{road} con {count} alertas",
+      coverageText: "{count} cámaras de puerta activas en {roads} corredores de autopista.",
+      noWarnings: "Sin alertas",
+      escalated: "Se recomienda vigilancia reforzada en corredores de alta velocidad.",
+      tolerance: "El volumen de alertas sigue dentro de la tolerancia esperada.",
+      operatorText: "El exceso de velocidad repetido en la misma carretera es la señal más clara para control dirigido.",
+      noActiveCars: "No hay coches activos",
+      identityText: "Se rastrean matrícula, marca, modelo, color, carretera, ruta, cámara y peaje en vivo por coche activo.",
+      mixedFlow: "Perfil mixto de tráfico privado y de larga distancia.",
+      lowFlow: "Flujo bajo con mejor observabilidad por cámara."
+    },
+    alerts: {
+      none: "No hay alertas de comportamiento sospechoso.",
+      labelCar: "Coche",
+      labelCamera: "Cámara",
+      labelSpeed: "Velocidad",
+      labelLimit: "Límite",
+      labelRoute: "Ruta"
+    },
+    entries: { none: "No hay puertas de entrada" },
+    exits: { none: "No hay puertas de salida" },
+    trips: { none: "No hay coches activos" },
+    status: { noResponse: "No hay respuesta del simulador.", error: "Error del simulador: {error}{details}" },
+    misc: { unknownRoute: "ruta desconocida", currency: "PLN", nA: "n/d", noData: "n/d" }
+  }
 };
 
 function icon(name, extraClass = "") {
@@ -76,6 +555,31 @@ function escapeHtml(str) {
     .replace(/'/g, "&#39;");
 }
 
+function dict() {
+  return TRANSLATIONS[currentLanguage] || TRANSLATIONS.en;
+}
+
+function pathValue(obj, path) {
+  return path.split(".").reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
+}
+
+function interpolate(template, vars = {}) {
+  return String(template).replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? ""));
+}
+
+function t(path, vars = {}) {
+  const value = pathValue(dict(), path) ?? pathValue(TRANSLATIONS.en, path) ?? path;
+  return typeof value === "string" ? interpolate(value, vars) : value;
+}
+
+function formatBadgeCount(count, key) {
+  return t(key, { count });
+}
+
+function safeText(value) {
+  return value || t("misc.noData");
+}
+
 function tollColor(toll) {
   if (toll < 80) return "#34d399";
   if (toll <= 160) return "#f59e0b";
@@ -93,24 +597,24 @@ function estimatedSpeed(t) {
 
 function roadStats(state) {
   const stats = {};
-  state.activeTrips.forEach((t) => {
-    if (!stats[t.road]) {
-      stats[t.road] = { active: 0, revenue: 0, avgSpeed: 0, warnings: 0, samples: 0 };
+  state.activeTrips.forEach((trip) => {
+    if (!stats[trip.road]) {
+      stats[trip.road] = { active: 0, revenue: 0, avgSpeed: 0, warnings: 0, samples: 0 };
     }
-    stats[t.road].active += 1;
-    stats[t.road].revenue += Number(t.toll || 0);
-    stats[t.road].avgSpeed += estimatedSpeed(t);
-    stats[t.road].samples += 1;
+    stats[trip.road].active += 1;
+    stats[trip.road].revenue += Number(trip.toll || 0);
+    stats[trip.road].avgSpeed += estimatedSpeed(trip);
+    stats[trip.road].samples += 1;
   });
-  (state.alerts || []).forEach((a) => {
-    const road = String(a.route || "").split(":")[0];
+  (state.alerts || []).forEach((alert) => {
+    const road = String(alert.route || "").split(":")[0];
     if (!stats[road]) {
       stats[road] = { active: 0, revenue: 0, avgSpeed: 0, warnings: 0, samples: 0 };
     }
     stats[road].warnings += 1;
   });
-  Object.values(stats).forEach((s) => {
-    if (s.samples > 0) s.avgSpeed /= s.samples;
+  Object.values(stats).forEach((entry) => {
+    if (entry.samples > 0) entry.avgSpeed /= entry.samples;
   });
   return stats;
 }
@@ -133,8 +637,8 @@ function hydrateStaticIcons() {
 
 function roadSet(state) {
   const set = new Set();
-  state.entries.forEach((e) => set.add(e.road));
-  state.exits.forEach((e) => set.add(e.road));
+  state.entries.forEach((entry) => set.add(entry.road));
+  state.exits.forEach((entry) => set.add(entry.road));
   return [...set];
 }
 
@@ -152,35 +656,22 @@ function connectedRoads(roads) {
 function buildGateNodes(state) {
   const nodes = {};
   const grouped = {};
-  const place = (g, type) => {
-    if (!grouped[g.road]) grouped[g.road] = { entry: [], exit: [] };
-    grouped[g.road][type].push(g);
+
+  const place = (gate, type) => {
+    if (!grouped[gate.road]) grouped[gate.road] = { entry: [], exit: [] };
+    grouped[gate.road][type].push(gate);
   };
 
-  state.entries.forEach((g) => place(g, "entry"));
-  state.exits.forEach((g) => place(g, "exit"));
+  state.entries.forEach((gate) => place(gate, "entry"));
+  state.exits.forEach((gate) => place(gate, "exit"));
 
   Object.keys(grouped).forEach((road) => {
     const center = ROAD_POSITIONS[road] || { x: 600, y: 180 };
-    const entryList = grouped[road].entry;
-    const exitList = grouped[road].exit;
-
-    entryList.forEach((g, i) => {
-      nodes[g.id] = {
-        x: center.x - 120,
-        y: center.y - 40 + i * 22,
-        gate: g,
-        type: "entry"
-      };
+    grouped[road].entry.forEach((gate, index) => {
+      nodes[gate.id] = { x: center.x - 120, y: center.y - 40 + index * 22, gate, type: "entry" };
     });
-
-    exitList.forEach((g, i) => {
-      nodes[g.id] = {
-        x: center.x + 120,
-        y: center.y - 40 + i * 22,
-        gate: g,
-        type: "exit"
-      };
+    grouped[road].exit.forEach((gate, index) => {
+      nodes[gate.id] = { x: center.x + 120, y: center.y - 40 + index * 22, gate, type: "exit" };
     });
   });
 
@@ -190,7 +681,6 @@ function buildGateNodes(state) {
 function drawRoadGraphBase(state) {
   const roads = roadSet(state);
   const connected = connectedRoads(roads);
-
   let svg = `
     <defs>
       <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
@@ -212,14 +702,14 @@ function drawRoadGraphBase(state) {
     svg += `<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="#e5e7eb" stroke-width="2.2" opacity="0.9"/>`;
   });
 
-  roads.forEach((r) => {
-    const p = ROAD_POSITIONS[r] || { x: 600, y: 180 };
-    const isConnected = connected.has(r);
+  roads.forEach((road) => {
+    const point = ROAD_POSITIONS[road] || { x: 600, y: 180 };
+    const isConnected = connected.has(road);
     const fill = isConnected ? "#1d4ed8" : "#7c3aed";
     const stroke = isConnected ? "#60a5fa" : "#c4b5fd";
     svg += `
-      <circle cx="${p.x}" cy="${p.y}" r="28" fill="${fill}" stroke="${stroke}" stroke-width="3" />
-      <text x="${p.x}" y="${p.y + 6}" fill="#eef2ff" font-size="16" font-weight="700" text-anchor="middle">${escapeHtml(r)}</text>
+      <circle cx="${point.x}" cy="${point.y}" r="28" fill="${fill}" stroke="${stroke}" stroke-width="3" />
+      <text x="${point.x}" y="${point.y + 6}" fill="#eef2ff" font-size="16" font-weight="700" text-anchor="middle">${escapeHtml(road)}</text>
     `;
   });
 
@@ -235,47 +725,47 @@ function renderTrafficMap(state) {
   const gateNodes = buildGateNodes(state);
   let svg = drawRoadGraphBase(state);
 
-  state.entries.forEach((g) => {
-    const n = gateNodes[g.id];
-    if (!n) return;
+  state.entries.forEach((gate) => {
+    const node = gateNodes[gate.id];
+    if (!node) return;
     svg += `
-      <circle cx="${n.x}" cy="${n.y}" r="10" fill="#22c55e" stroke="#bbf7d0" stroke-width="2" />
-      <text x="${n.x - 16}" y="${n.y - 14}" fill="#dbeafe" font-size="11" text-anchor="end">${escapeHtml(g.id)}</text>
+      <circle cx="${node.x}" cy="${node.y}" r="10" fill="#22c55e" stroke="#bbf7d0" stroke-width="2" />
+      <text x="${node.x - 16}" y="${node.y - 14}" fill="#dbeafe" font-size="11" text-anchor="end">${escapeHtml(gate.id)}</text>
     `;
   });
 
-  state.exits.forEach((g) => {
-    const n = gateNodes[g.id];
-    if (!n) return;
+  state.exits.forEach((gate) => {
+    const node = gateNodes[gate.id];
+    if (!node) return;
     svg += `
-      <circle cx="${n.x}" cy="${n.y}" r="10" fill="#f97316" stroke="#fed7aa" stroke-width="2" />
-      <text x="${n.x + 16}" y="${n.y - 14}" fill="#dbeafe" font-size="11" text-anchor="start">${escapeHtml(g.id)}</text>
+      <circle cx="${node.x}" cy="${node.y}" r="10" fill="#f97316" stroke="#fed7aa" stroke-width="2" />
+      <text x="${node.x + 16}" y="${node.y - 14}" fill="#dbeafe" font-size="11" text-anchor="start">${escapeHtml(gate.id)}</text>
     `;
   });
 
-  state.activeTrips.forEach((t, idx) => {
-    const start = gateNodes[t.entryId];
-    const end = gateNodes[t.exitId];
-    const hub = ROAD_POSITIONS[t.road] || { x: 600, y: 180 };
+  state.activeTrips.forEach((trip, index) => {
+    const start = gateNodes[trip.entryId];
+    const end = gateNodes[trip.exitId];
+    const hub = ROAD_POSITIONS[trip.road] || { x: 600, y: 180 };
     if (!start || !end) return;
 
-    const totalTicks = Math.max(1, Number(t.totalTicks || 1));
-    const progress = Math.max(0, Math.min(1, 1 - t.ticksLeft / totalTicks));
-
+    const totalTicks = Math.max(1, Number(trip.totalTicks || 1));
+    const progress = Math.max(0, Math.min(1, 1 - trip.ticksLeft / totalTicks));
     let vx;
     let vy;
+
     if (progress < 0.5) {
-      const p = progress * 2;
-      vx = start.x + (hub.x - start.x) * p;
-      vy = start.y + (hub.y - start.y) * p;
+      const factor = progress * 2;
+      vx = start.x + (hub.x - start.x) * factor;
+      vy = start.y + (hub.y - start.y) * factor;
     } else {
-      const p = (progress - 0.5) * 2;
-      vx = hub.x + (end.x - hub.x) * p;
-      vy = hub.y + (end.y - hub.y) * p;
+      const factor = (progress - 0.5) * 2;
+      vx = hub.x + (end.x - hub.x) * factor;
+      vy = hub.y + (end.y - hub.y) * factor;
     }
 
-    const color = tollColor(Number(t.toll || 0));
-    const jitter = ((idx % 5) - 2) * 3;
+    const color = tollColor(Number(trip.toll || 0));
+    const jitter = ((index % 5) - 2) * 3;
 
     svg += `
       <path d="M ${start.x} ${start.y} L ${hub.x} ${hub.y} L ${end.x} ${end.y}" stroke="${color}" stroke-width="2" fill="none" stroke-dasharray="5 6" opacity="0.9" />
@@ -286,7 +776,7 @@ function renderTrafficMap(state) {
   });
 
   if (!state.activeTrips.length) {
-    svg += `<text x="600" y="210" fill="#cbd5e1" font-size="14" text-anchor="middle">No active cars on the network</text>`;
+    svg += `<text x="600" y="210" fill="#cbd5e1" font-size="14" text-anchor="middle">${escapeHtml(t("map.noActiveCars"))}</text>`;
   }
 
   trafficMap.innerHTML = svg;
@@ -297,22 +787,22 @@ function renderAlerts(state) {
   alertsEl.innerHTML = "";
 
   if (!alerts.length) {
-    alertsEl.innerHTML = '<div class="small">No suspicious behavior warnings.</div>';
+    alertsEl.innerHTML = `<div class="small">${escapeHtml(t("alerts.none"))}</div>`;
     return;
   }
 
   alerts
     .slice()
     .reverse()
-    .forEach((a) => {
+    .forEach((alert) => {
       const item = document.createElement("div");
       item.className = "alert-item";
       item.innerHTML = `
         <span class="alert-icon">${icon("warning")}</span>
         <span>
-          <strong>${escapeHtml(a.type || "warning")}</strong> [t=${a.tick}] ${escapeHtml(a.message)}<br/>
-          Car: ${escapeHtml(a.vehicleA || "n/a")} · ${escapeHtml(a.make || "?")} ${escapeHtml(a.model || "?")} · ${escapeHtml(a.color || "?")}<br/>
-          Camera: ${escapeHtml(a.cameraId || "CAM-UNKNOWN")} · Speed: ${Number(a.measuredSpeedKmh || 0).toFixed(1)} km/h / Limit ${Number(a.speedLimitKmh || 0).toFixed(0)} km/h · Route ${escapeHtml(a.route || "")}
+          <strong>${escapeHtml(alert.type || "warning")}</strong> [t=${alert.tick}] ${escapeHtml(alert.message)}<br/>
+          ${escapeHtml(t("alerts.labelCar"))}: ${escapeHtml(alert.vehicleA || t("misc.nA"))} · ${escapeHtml(safeText(alert.make))} ${escapeHtml(safeText(alert.model))} · ${escapeHtml(safeText(alert.color))}<br/>
+          ${escapeHtml(t("alerts.labelCamera"))}: ${escapeHtml(alert.cameraId || "CAM-UNKNOWN")} · ${escapeHtml(t("alerts.labelSpeed"))}: ${Number(alert.measuredSpeedKmh || 0).toFixed(1)} km/h / ${escapeHtml(t("alerts.labelLimit"))} ${Number(alert.speedLimitKmh || 0).toFixed(0)} km/h · ${escapeHtml(t("alerts.labelRoute"))} ${escapeHtml(alert.route || "")}
         </span>
       `;
       alertsEl.appendChild(item);
@@ -321,23 +811,28 @@ function renderAlerts(state) {
 
 function renderHero(state) {
   const roads = roadSet(state);
-  networkTitle.textContent = `${state.networkName || "Poland Highway Monitoring Grid"}`;
-  badgeRoads.textContent = `${roads.length} roads`;
-  badgeCameras.textContent = `${state.entries.length + state.exits.length} cameras`;
-  badgeFleet.textContent = `${state.activeTripCount} active`;
+  networkTitle.textContent = t("hero.networkName");
+  badgeRoads.textContent = formatBadgeCount(roads.length, "hero.roadsBadge");
+  badgeCameras.textContent = formatBadgeCount(state.entries.length + state.exits.length, "hero.camerasBadge");
+  badgeFleet.textContent = formatBadgeCount(state.activeTripCount, "hero.activeBadge");
 
   const topAlert = (state.alerts || []).slice().reverse()[0];
   if (topAlert) {
     spotlight.innerHTML = `
-      <div class="eyebrow">Priority Warning</div>
-      <div><strong>${escapeHtml(topAlert.type || "warning")}</strong> detected on <strong>${escapeHtml(topAlert.route || "unknown route")}</strong>.</div>
-      <div class="small">Vehicle ${escapeHtml(topAlert.vehicleA || "n/a")} · ${escapeHtml(topAlert.make || "?")} ${escapeHtml(topAlert.model || "?")} · Camera ${escapeHtml(topAlert.cameraId || "CAM-UNKNOWN")}</div>
+      <div class="eyebrow">${escapeHtml(t("hero.priorityWarning"))}</div>
+      <div><strong>${escapeHtml(topAlert.type || "warning")}</strong> ${escapeHtml(t("hero.warningDetectedSuffix", { route: topAlert.route || t("misc.unknownRoute") }))}</div>
+      <div class="small">${escapeHtml(t("hero.warningVehicle", {
+        vehicle: topAlert.vehicleA || t("misc.nA"),
+        make: safeText(topAlert.make),
+        model: safeText(topAlert.model),
+        camera: topAlert.cameraId || "CAM-UNKNOWN"
+      }))}</div>
     `;
   } else {
     spotlight.innerHTML = `
-      <div class="eyebrow">Network Status</div>
-      <div><strong>Stable flow.</strong> No suspicious driving events currently flagged by motorway cameras.</div>
-      <div class="small">The console is tracking toll flow, camera identity, route occupancy, and suspicious travel patterns.</div>
+      <div class="eyebrow">${escapeHtml(t("hero.networkStatus"))}</div>
+      <div><strong>${escapeHtml(t("hero.stableHeadline"))}</strong> ${escapeHtml(t("hero.stableCopy"))}</div>
+      <div class="small">${escapeHtml(t("hero.stableSubcopy"))}</div>
     `;
   }
 }
@@ -350,19 +845,19 @@ function renderRoadHealth(state) {
   roads.forEach((road) => {
     const s = stats[road] || { active: 0, revenue: 0, avgSpeed: 0, warnings: 0 };
     const badgeClass = s.warnings > 3 ? "bad" : s.warnings > 0 ? "warn" : "good";
-    const badgeText = s.warnings > 3 ? "Hot" : s.warnings > 0 ? "Watch" : "Stable";
+    const badgeText = s.warnings > 3 ? t("roadHealth.hot") : s.warnings > 0 ? t("roadHealth.watch") : t("roadHealth.stable");
     const div = document.createElement("div");
     div.className = "road-card";
     div.innerHTML = `
       <div class="road-top">
         <div class="road-code">${icon("roads", "icon-sm")}<span>${road}</span></div>
-        <span class="badge ${badgeClass}">${badgeText}</span>
+        <span class="badge ${badgeClass}">${escapeHtml(badgeText)}</span>
       </div>
       <div class="road-metrics">
-        <span>${icon("car", "icon-xs")} ${s.active} active</span>
-        <span>${icon("revenue", "icon-xs")} ${s.revenue.toFixed(0)} PLN</span>
-        <span>${icon("warning", "icon-xs")} ${s.warnings} warnings</span>
-        <span>${icon("speed", "icon-xs")} ${s.avgSpeed ? s.avgSpeed.toFixed(0) : 0} km/h avg</span>
+        <span>${icon("car", "icon-xs")} ${s.active} ${escapeHtml(t("roadHealth.active"))}</span>
+        <span>${icon("revenue", "icon-xs")} ${s.revenue.toFixed(0)} ${escapeHtml(t("misc.currency"))}</span>
+        <span>${icon("warning", "icon-xs")} ${s.warnings} ${escapeHtml(t("roadHealth.warnings"))}</span>
+        <span>${icon("speed", "icon-xs")} ${s.avgSpeed ? s.avgSpeed.toFixed(0) : 0} km/h ${escapeHtml(t("roadHealth.avg"))}</span>
       </div>
     `;
     roadHealth.appendChild(div);
@@ -371,22 +866,22 @@ function renderRoadHealth(state) {
 
 function renderCameraWatch(state) {
   const cameras = [...state.entries.map((g) => ({ ...g, kind: "Entry" })), ...state.exits.map((g) => ({ ...g, kind: "Exit" }))];
-  const watchRoutes = new Set((state.alerts || []).map((a) => String(a.route || "").split(":")[0]));
+  const watchRoutes = new Set((state.alerts || []).map((alert) => String(alert.route || "").split(":")[0]));
   cameraWatch.innerHTML = "";
 
-  cameras.slice(0, 8).forEach((c, idx) => {
-    const hot = watchRoutes.has(c.road);
+  cameras.slice(0, 8).forEach((camera, index) => {
+    const hot = watchRoutes.has(camera.road);
     const card = document.createElement("div");
     card.className = "camera-card";
     card.innerHTML = `
       <div class="camera-top">
-        <div class="camera-id">${icon(c.kind === "Entry" ? "entry" : "exit", "icon-sm")}<span>${c.id}</span></div>
-        <span class="badge ${hot ? "warn" : "good"}">${hot ? "Flagged road" : "Clear feed"}</span>
+        <div class="camera-id">${icon(camera.kind === "Entry" ? "entry" : "exit", "icon-sm")}<span>${camera.id}</span></div>
+        <span class="badge ${hot ? "warn" : "good"}">${escapeHtml(hot ? t("cameraWatch.flagged") : t("cameraWatch.clear"))}</span>
       </div>
       <div class="camera-meta">
-        <span>Road ${c.road}</span>
-        <span>${c.name}</span>
-        <span>Lane ${idx + 1}</span>
+        <span>${escapeHtml(t("cameraWatch.road"))} ${camera.road}</span>
+        <span>${escapeHtml(camera.name)}</span>
+        <span>${escapeHtml(t("cameraWatch.lane"))} ${index + 1}</span>
       </div>
     `;
     cameraWatch.appendChild(card);
@@ -395,37 +890,40 @@ function renderCameraWatch(state) {
 
 function renderRevenueMix(state) {
   const buckets = { low: 0, medium: 0, high: 0 };
-  state.activeTrips.forEach((t) => {
-    const toll = Number(t.toll || 0);
+  state.activeTrips.forEach((trip) => {
+    const toll = Number(trip.toll || 0);
     if (toll < 80) buckets.low += 1;
     else if (toll <= 160) buckets.medium += 1;
     else buckets.high += 1;
   });
+
   revenueMix.innerHTML = `
-    <div class="mini-stat"><span>${icon("roads", "icon-xs")} Low toll corridors</span><strong>${buckets.low}</strong></div>
-    <div class="mini-stat"><span>${icon("roads", "icon-xs")} Medium toll corridors</span><strong>${buckets.medium}</strong></div>
-    <div class="mini-stat"><span>${icon("warning", "icon-xs")} High toll corridors</span><strong>${buckets.high}</strong></div>
-    <div class="mini-stat"><span>${icon("revenue", "icon-xs")} Total collected</span><strong>${state.revenue.toFixed(0)} PLN</strong></div>
+    <div class="mini-stat"><span>${icon("roads", "icon-xs")} ${escapeHtml(t("revenueMix.low"))}</span><strong>${buckets.low}</strong></div>
+    <div class="mini-stat"><span>${icon("roads", "icon-xs")} ${escapeHtml(t("revenueMix.medium"))}</span><strong>${buckets.medium}</strong></div>
+    <div class="mini-stat"><span>${icon("warning", "icon-xs")} ${escapeHtml(t("revenueMix.high"))}</span><strong>${buckets.high}</strong></div>
+    <div class="mini-stat"><span>${icon("revenue", "icon-xs")} ${escapeHtml(t("revenueMix.total"))}</span><strong>${state.revenue.toFixed(0)} ${escapeHtml(t("misc.currency"))}</strong></div>
   `;
 }
 
 function renderFleetIntel(state) {
   const byMake = {};
   const byColor = {};
-  state.activeTrips.forEach((t) => {
-    byMake[t.make] = (byMake[t.make] || 0) + 1;
-    byColor[t.color] = (byColor[t.color] || 0) + 1;
+  state.activeTrips.forEach((trip) => {
+    byMake[trip.make] = (byMake[trip.make] || 0) + 1;
+    byColor[trip.color] = (byColor[trip.color] || 0) + 1;
   });
+
   const topMake = Object.entries(byMake).sort((a, b) => b[1] - a[1])[0];
   const topColor = Object.entries(byColor).sort((a, b) => b[1] - a[1])[0];
   const avgSpeed = state.activeTrips.length
-    ? state.activeTrips.reduce((sum, t) => sum + estimatedSpeed(t), 0) / state.activeTrips.length
+    ? state.activeTrips.reduce((sum, trip) => sum + estimatedSpeed(trip), 0) / state.activeTrips.length
     : 0;
+
   fleetIntel.innerHTML = `
-    <div class="mini-stat"><span>${icon("speed", "icon-xs")} Avg live speed</span><strong>${avgSpeed.toFixed(0)} km/h</strong></div>
-    <div class="mini-stat"><span>${icon("factory", "icon-xs")} Dominant make</span><strong>${topMake ? `${topMake[0]} · ${topMake[1]}` : "n/a"}</strong></div>
-    <div class="mini-stat"><span>${icon("palette", "icon-xs")} Dominant color</span><strong>${topColor ? `${topColor[0]} · ${topColor[1]}` : "n/a"}</strong></div>
-    <div class="mini-stat"><span>${icon("density", "icon-xs")} Warning density</span><strong>${state.activeTripCount ? ((state.alerts.length / state.activeTripCount) * 100).toFixed(0) : 0}%</strong></div>
+    <div class="mini-stat"><span>${icon("speed", "icon-xs")} ${escapeHtml(t("fleetIntel.avgSpeed"))}</span><strong>${avgSpeed.toFixed(0)} km/h</strong></div>
+    <div class="mini-stat"><span>${icon("factory", "icon-xs")} ${escapeHtml(t("fleetIntel.dominantMake"))}</span><strong>${escapeHtml(topMake ? `${topMake[0]} · ${topMake[1]}` : t("misc.noData"))}</strong></div>
+    <div class="mini-stat"><span>${icon("palette", "icon-xs")} ${escapeHtml(t("fleetIntel.dominantColor"))}</span><strong>${escapeHtml(topColor ? `${topColor[0]} · ${topColor[1]}` : t("misc.noData"))}</strong></div>
+    <div class="mini-stat"><span>${icon("density", "icon-xs")} ${escapeHtml(t("fleetIntel.warningDensity"))}</span><strong>${state.activeTripCount ? ((state.alerts.length / state.activeTripCount) * 100).toFixed(0) : 0}%</strong></div>
   `;
 }
 
@@ -433,72 +931,91 @@ function renderCommandCenter(state) {
   const stats = roadStats(state);
   const hottestRoad = Object.entries(stats).sort((a, b) => b[1].warnings - a[1].warnings)[0];
   const fastest = state.activeTrips
-    .map((t) => ({ ...t, speed: estimatedSpeed(t) }))
+    .map((trip) => ({ ...trip, speed: estimatedSpeed(trip) }))
     .sort((a, b) => b.speed - a.speed)
     .slice(0, 4);
   const recentAlerts = (state.alerts || []).slice().reverse().slice(0, 4);
 
   overviewBoard.innerHTML = `
     <div class="board-card">
-      <h5>Network Posture</h5>
-      <p>${state.activeTripCount > 18 ? "Dense motorway flow across primary corridors." : "Moderate motorway load with room for throughput growth."}</p>
+      <h5>${escapeHtml(t("commandCenter.networkPosture"))}</h5>
+      <p>${escapeHtml(state.activeTripCount > 18 ? t("commandCenter.denseFlow") : t("commandCenter.moderateFlow"))}</p>
     </div>
     <div class="board-card">
-      <h5>Most Pressured Road</h5>
-      <p>${hottestRoad ? `${hottestRoad[0]} with ${hottestRoad[1].warnings} warnings` : "No hot corridor right now."}</p>
+      <h5>${escapeHtml(t("commandCenter.mostPressured"))}</h5>
+      <p>${escapeHtml(hottestRoad ? t("commandCenter.hotRoad", { road: hottestRoad[0], count: hottestRoad[1].warnings }) : t("commandCenter.noHotRoad"))}</p>
     </div>
     <div class="board-card">
-      <h5>Camera Coverage</h5>
-      <p>${state.entries.length + state.exits.length} active gate cameras across ${roadSet(state).length} motorway corridors.</p>
+      <h5>${escapeHtml(t("commandCenter.cameraCoverage"))}</h5>
+      <p>${escapeHtml(t("commandCenter.coverageText", { count: state.entries.length + state.exits.length, roads: roadSet(state).length }))}</p>
     </div>
   `;
 
   riskBoard.innerHTML = `
     <div class="board-card">
-      <h5>Latest Warnings</h5>
-      <ul>${recentAlerts.length ? recentAlerts.map((a) => `<li>${escapeHtml(a.type)} · ${escapeHtml(a.vehicleA)} · ${escapeHtml(a.route)}</li>`).join("") : "<li>No warnings</li>"}</ul>
+      <h5>${escapeHtml(t("commandCenter.latestWarnings"))}</h5>
+      <ul>${recentAlerts.length ? recentAlerts.map((alert) => `<li>${escapeHtml(alert.type)} · ${escapeHtml(alert.vehicleA)} · ${escapeHtml(alert.route)}</li>`).join("") : `<li>${escapeHtml(t("commandCenter.noWarnings"))}</li>`}</ul>
     </div>
     <div class="board-card">
-      <h5>Risk Heuristic</h5>
-      <p>${state.alerts.length > 6 ? "Escalated monitoring recommended on high-speed corridors." : "Warning volume remains inside expected tolerance."}</p>
+      <h5>${escapeHtml(t("commandCenter.riskHeuristic"))}</h5>
+      <p>${escapeHtml(state.alerts.length > 6 ? t("commandCenter.escalated") : t("commandCenter.tolerance"))}</p>
     </div>
     <div class="board-card">
-      <h5>Operator Note</h5>
-      <p>Repeated speeding on the same road is the clearest signal for targeted enforcement placement.</p>
+      <h5>${escapeHtml(t("commandCenter.operatorNote"))}</h5>
+      <p>${escapeHtml(t("commandCenter.operatorText"))}</p>
     </div>
   `;
 
   fleetBoard.innerHTML = `
     <div class="board-card">
-      <h5>Fastest Live Cars</h5>
-      <ul>${fastest.length ? fastest.map((t) => `<li>${escapeHtml(t.plate)} · ${escapeHtml(t.make)} ${escapeHtml(t.model)} · ${t.speed.toFixed(0)} km/h</li>`).join("") : "<li>No active cars</li>"}</ul>
+      <h5>${escapeHtml(t("commandCenter.fastestCars"))}</h5>
+      <ul>${fastest.length ? fastest.map((trip) => `<li>${escapeHtml(trip.plate)} · ${escapeHtml(trip.make)} ${escapeHtml(trip.model)} · ${trip.speed.toFixed(0)} km/h</li>`).join("") : `<li>${escapeHtml(t("commandCenter.noActiveCars"))}</li>`}</ul>
     </div>
     <div class="board-card">
-      <h5>Identity Depth</h5>
-      <p>Plate, make, model, color, road, route, camera source, and live toll are currently tracked per active car.</p>
+      <h5>${escapeHtml(t("commandCenter.identityDepth"))}</h5>
+      <p>${escapeHtml(t("commandCenter.identityText"))}</p>
     </div>
     <div class="board-card">
-      <h5>Flow Character</h5>
-      <p>${state.activeTripCount > 12 ? "Mixed private and long-distance motorway traffic profile." : "Low-volume motorway stream with cleaner camera observability."}</p>
+      <h5>${escapeHtml(t("commandCenter.flowCharacter"))}</h5>
+      <p>${escapeHtml(state.activeTripCount > 12 ? t("commandCenter.mixedFlow") : t("commandCenter.lowFlow"))}</p>
     </div>
   `;
 }
 
+function renderStaticText() {
+  document.documentElement.lang = currentLanguage;
+  Object.entries(TEXT_IDS).forEach(([id, key]) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = t(key);
+  });
+  btnTick1.textContent = t("buttons.tick1");
+  btnTick5.textContent = t("buttons.tick5");
+  btnTick20.textContent = t("buttons.tick20");
+  btnReset.textContent = t("buttons.reset");
+  btnAuto.textContent = autoTimer ? t("buttons.stopAuto") : t("buttons.startAuto");
+  langOptions.forEach((option) => {
+    option.classList.toggle("active", option.dataset.lang === currentLanguage);
+  });
+}
+
 function render(state) {
+  currentState = state;
   if (!state) {
-    statusEl.textContent = "No response from simulator.";
+    statusEl.textContent = t("status.noResponse");
     return;
   }
   if (state.error) {
-    statusEl.textContent = `Simulator error: ${state.error}${state.details ? ` (${state.details})` : ""}`;
+    const details = state.details ? ` (${state.details})` : "";
+    statusEl.textContent = t("status.error", { error: state.error, details });
     return;
   }
 
+  renderStaticText();
   statusEl.textContent = "";
   mTick.textContent = state.tick;
   mActive.textContent = state.activeTripCount;
   mCompleted.textContent = state.completedTrips;
-  mRevenue.textContent = `${state.revenue.toFixed(2)} ${state.currency}`;
+  mRevenue.textContent = `${state.revenue.toFixed(2)} ${state.currency || t("misc.currency")}`;
 
   renderHero(state);
   renderRoadHealth(state);
@@ -508,34 +1025,55 @@ function render(state) {
   renderCommandCenter(state);
 
   entries.innerHTML = "";
-  state.entries.forEach((g) => {
+  if (!state.entries.length) {
     const li = document.createElement("li");
-    li.textContent = `${g.road} · ${g.id} - ${g.name}`;
+    li.className = "small";
+    li.textContent = t("entries.none");
     entries.appendChild(li);
-  });
+  } else {
+    state.entries.forEach((gate) => {
+      const li = document.createElement("li");
+      li.textContent = `${gate.road} · ${gate.id} - ${gate.name}`;
+      entries.appendChild(li);
+    });
+  }
 
   exits.innerHTML = "";
-  state.exits.forEach((g) => {
+  if (!state.exits.length) {
     const li = document.createElement("li");
-    li.textContent = `${g.road} · ${g.id} - ${g.name}`;
+    li.className = "small";
+    li.textContent = t("exits.none");
     exits.appendChild(li);
-  });
+  } else {
+    state.exits.forEach((gate) => {
+      const li = document.createElement("li");
+      li.textContent = `${gate.road} · ${gate.id} - ${gate.name}`;
+      exits.appendChild(li);
+    });
+  }
 
   trips.innerHTML = "";
   if (!state.activeTrips.length) {
     const tr = document.createElement("tr");
-    tr.innerHTML = '<td colspan="7" class="small">No active cars</td>';
+    tr.innerHTML = `<td colspan="7" class="small">${escapeHtml(t("trips.none"))}</td>`;
     trips.appendChild(tr);
   } else {
-    state.activeTrips.forEach((t) => {
+    state.activeTrips.forEach((trip) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${t.tripId}</td><td>${t.plate}<br/><span class="small">${t.make} ${t.model}, ${t.color}</span></td><td>${t.road}:${t.entryId}</td><td>${t.road}:${t.exitId}</td><td>${t.distanceKm}</td><td>${t.ticksLeft}</td><td>${t.toll.toFixed(2)}</td>`;
+      tr.innerHTML = `<td>${trip.tripId}</td><td>${escapeHtml(trip.plate)}<br/><span class="small">${escapeHtml(trip.make)} ${escapeHtml(trip.model)}, ${escapeHtml(trip.color)}</span></td><td>${escapeHtml(`${trip.road}:${trip.entryId}`)}</td><td>${escapeHtml(`${trip.road}:${trip.exitId}`)}</td><td>${trip.distanceKm}</td><td>${trip.ticksLeft}</td><td>${trip.toll.toFixed(2)}</td>`;
       trips.appendChild(tr);
     });
   }
 
   renderTrafficMap(state);
   renderAlerts(state);
+}
+
+function applyLanguage(lang) {
+  currentLanguage = TRANSLATIONS[lang] ? lang : "en";
+  localStorage.setItem("highway-network-language", currentLanguage);
+  renderStaticText();
+  if (currentState) render(currentState);
 }
 
 async function refresh() {
@@ -554,14 +1092,35 @@ btnAuto.onclick = () => {
   if (autoTimer) {
     clearInterval(autoTimer);
     autoTimer = null;
-    btnAuto.textContent = "Start Auto";
+    btnAuto.textContent = t("buttons.startAuto");
     return;
   }
   autoTimer = setInterval(() => tick(1), 700);
-  btnAuto.textContent = "Stop Auto";
+  btnAuto.textContent = t("buttons.stopAuto");
 };
 
+langToggle.addEventListener("click", () => {
+  const open = langMenu.classList.toggle("open");
+  langToggle.setAttribute("aria-expanded", open ? "true" : "false");
+});
+
+langOptions.forEach((option) => {
+  option.addEventListener("click", () => {
+    applyLanguage(option.dataset.lang);
+    langMenu.classList.remove("open");
+    langToggle.setAttribute("aria-expanded", "false");
+  });
+});
+
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".lang-switcher")) {
+    langMenu.classList.remove("open");
+    langToggle.setAttribute("aria-expanded", "false");
+  }
+});
+
 hydrateStaticIcons();
+applyLanguage(currentLanguage);
 refresh();
 pollTimer = setInterval(() => {
   refresh();

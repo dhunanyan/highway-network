@@ -112,7 +112,7 @@ th {
 }
 #trafficMap {
   width: 100%;
-  min-height: 360px;
+  min-height: 420px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: linear-gradient(180deg, #0b1224 0%, #0f172a 100%);
@@ -146,8 +146,8 @@ th {
 }
 .alerts {
   margin-top: 10px;
-  max-height: 130px;
-  min-height: 70px;
+  max-height: 180px;
+  min-height: 90px;
   overflow-y: auto;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -161,6 +161,11 @@ th {
   color: #fecaca;
   font-size: 12px;
   margin-bottom: 6px;
+}
+.panel h4 {
+  margin: 12px 0 6px;
+  color: #fca5a5;
+  font-size: 14px;
 }
 .alert-item:last-child {
   margin-bottom: 0;

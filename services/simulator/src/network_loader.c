@@ -54,7 +54,7 @@ int network_load_csv(const char *path, Network *out_network)
   while (fgets(line, sizeof(line), fp) != NULL) {
     char *token;
     char *saveptr = NULL;
-    char *fields[4];
+    char *fields[5];
     int i;
     GateType type;
 
@@ -65,13 +65,13 @@ int network_load_csv(const char *path, Network *out_network)
 
     i = 0;
     token = strtok_r(line, ",", &saveptr);
-    while (token && i < 4) {
+    while (token && i < 5) {
       trim(token);
       fields[i++] = token;
       token = strtok_r(NULL, ",", &saveptr);
     }
 
-    if (i != 4 || parse_type(fields[0], &type) != 0) {
+    if ((i != 4 && i != 5) || parse_type(fields[0], &type) != 0) {
       fclose(fp);
       return 1;
     }
@@ -84,9 +84,17 @@ int network_load_csv(const char *path, Network *out_network)
       }
       g = &out_network->entries[out_network->entry_count++];
       g->type = type;
-      snprintf(g->id, sizeof(g->id), "%s", fields[1]);
-      snprintf(g->name, sizeof(g->name), "%s", fields[2]);
-      g->km = atoi(fields[3]);
+      if (i == 5) {
+        snprintf(g->road_code, sizeof(g->road_code), "%s", fields[1]);
+        snprintf(g->id, sizeof(g->id), "%s", fields[2]);
+        snprintf(g->name, sizeof(g->name), "%s", fields[3]);
+        g->km = atoi(fields[4]);
+      } else {
+        snprintf(g->road_code, sizeof(g->road_code), "%s", "A?");
+        snprintf(g->id, sizeof(g->id), "%s", fields[1]);
+        snprintf(g->name, sizeof(g->name), "%s", fields[2]);
+        g->km = atoi(fields[3]);
+      }
     } else {
       Gate *g;
       if (out_network->exit_count >= MAX_GATES) {
@@ -95,9 +103,17 @@ int network_load_csv(const char *path, Network *out_network)
       }
       g = &out_network->exits[out_network->exit_count++];
       g->type = type;
-      snprintf(g->id, sizeof(g->id), "%s", fields[1]);
-      snprintf(g->name, sizeof(g->name), "%s", fields[2]);
-      g->km = atoi(fields[3]);
+      if (i == 5) {
+        snprintf(g->road_code, sizeof(g->road_code), "%s", fields[1]);
+        snprintf(g->id, sizeof(g->id), "%s", fields[2]);
+        snprintf(g->name, sizeof(g->name), "%s", fields[3]);
+        g->km = atoi(fields[4]);
+      } else {
+        snprintf(g->road_code, sizeof(g->road_code), "%s", "A?");
+        snprintf(g->id, sizeof(g->id), "%s", fields[1]);
+        snprintf(g->name, sizeof(g->name), "%s", fields[2]);
+        g->km = atoi(fields[3]);
+      }
     }
   }
 

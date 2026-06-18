@@ -4,6 +4,7 @@
 #define MAX_GATES 32
 #define MAX_NAME_LEN 64
 #define MAX_ID_LEN 16
+#define MAX_ROAD_CODE_LEN 8
 #define MAX_ACTIVE_TRIPS 256
 #define MAX_ALERTS 24
 
@@ -14,6 +15,7 @@ typedef enum GateType {
 
 typedef struct Gate {
   GateType type;
+  char road_code[MAX_ROAD_CODE_LEN];
   char id[MAX_ID_LEN];
   char name[MAX_NAME_LEN];
   int km;
@@ -33,20 +35,35 @@ typedef struct Trip {
   int active;
   int trip_id;
   char plate[16];
+  char make[24];
+  char model[24];
+  char color[24];
+  char road_code[MAX_ROAD_CODE_LEN];
   int entry_index;
   int exit_index;
+  int entry_tick;
   int ticks_left;
   int total_ticks;
   int distance_km;
+  double speed_limit_kmh;
   double expected_toll;
+  int warned_speeding;
+  int warned_lingering;
 } Trip;
 
 typedef struct AlertEvent {
   int tick;
+  char type[24];
   char severity[16];
-  char message[192];
-  char plane_a[16];
-  char plane_b[16];
+  char message[256];
+  char vehicle_a[16];
+  char vehicle_b[16];
+  char make[24];
+  char model[24];
+  char color[24];
+  char camera_id[32];
+  double measured_speed_kmh;
+  double speed_limit_kmh;
   char route[48];
 } AlertEvent;
 

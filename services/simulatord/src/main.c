@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,6 +63,11 @@ int main(int argc, char **argv)
   }
 
   srand((unsigned int)time(NULL));
+
+  // Clients may disconnect while we are writing a response; keep the daemon
+  // alive and surface the write failure through stdio instead of terminating
+  // the whole process with SIGPIPE.
+  signal(SIGPIPE, SIG_IGN);
 
   if (network_load_csv(data_path, &network) != 0) {
     fprintf(stderr, "error: failed to load network data from %s\n", data_path);

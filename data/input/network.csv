@@ -1,13 +1,40 @@
-#type,id,name,km
-ENTRY,E_POZ,Poznan West,0
-ENTRY,E_GNI,Gniezno,75
-ENTRY,E_LOD,Lodz North,180
-ENTRY,E_OPL,Opole Junction,245
-ENTRY,E_KRK,Krakow Ring,350
-ENTRY,E_TAR,Tarnow East,430
-EXIT,X_WRO,Wroclaw East,120
-EXIT,X_CZE,Czestochowa,270
-EXIT,X_KAT,Katowice,410
-EXIT,X_GLI,Gliwice,455
-EXIT,X_RZE,Rzeszow North,560
-EXIT,X_LUB,Lublin Connector,640
+# type,road,id,name,km
+ENTRY,A1,E_GDA,Gdansk,0
+ENTRY,A1,E_TOR,Torun,170
+ENTRY,A1,E_LOD,Lodz,330
+ENTRY,A1,E_CZE,Czestochowa,440
+EXIT,A1,X_GRU,Grudziadz,90
+EXIT,A1,X_PIO,Piotrkow Trybunalski,380
+EXIT,A1,X_GLI,Gliwice,540
+
+ENTRY,A2,E_SWI,Swiecko Border,0
+ENTRY,A2,E_POZ,Poznan,160
+ENTRY,A2,E_STR,Strykow,300
+ENTRY,A2,E_WAW,Warszawa Zachod,470
+EXIT,A2,X_NTO,Nowy Tomysl,100
+EXIT,A2,X_KON,Konin,220
+EXIT,A2,X_LOD,Lodz East,340
+EXIT,A2,X_MIN,Minsk Mazowiecki,580
+
+ENTRY,A4,E_ZGO,Zgorzelec Border,0
+ENTRY,A4,E_WRO,Wroclaw,150
+ENTRY,A4,E_OPL,Opole,230
+ENTRY,A4,E_KAT,Katowice,300
+ENTRY,A4,E_KRK,Krakow,370
+ENTRY,A4,E_RZE,Rzeszow,570
+EXIT,A4,X_LEG,Legnica,90
+EXIT,A4,X_GLI,Gliwice,280
+EXIT,A4,X_TAR,Tarnow,460
+EXIT,A4,X_KOR,Korczowa Border,670
+
+ENTRY,A6,E_KOL,Kolbaskowo Border,0
+EXIT,A6,X_SZC,Szczecin,25
+
+ENTRY,A8,E_WPN,Wroclaw Polnoc,0
+EXIT,A8,X_WPD,Wroclaw Poludnie,27
+
+ENTRY,A18,E_OLS,Olszyna Border,0
+EXIT,A18,X_KRZ,Krzyzowa,76
+
+ENTRY,A50,E_CPK,CPK Poludnie (planned),0
+EXIT,A50,X_MIN,Minsk Mazowiecki Poludnie (planned),120

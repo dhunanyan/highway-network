@@ -29,7 +29,7 @@
           <div id="mTick" class="value">0</div>
         </div>
         <div class="metric">
-          <div class="label">Active Trips</div>
+          <div class="label">Active Cars</div>
           <div id="mActive" class="value">0</div>
         </div>
         <div class="metric">
@@ -53,7 +53,7 @@
       </section>
 
       <section class="panel full">
-        <h3>Active Trips</h3>
+        <h3>Active Cars</h3>
         <div class="trips-scroll">
           <table>
             <thead>
@@ -77,32 +77,37 @@
         <div class="map-wrap">
           <svg
             id="trafficMap"
-            viewBox="0 0 1200 360"
+            viewBox="0 0 1200 420"
             preserveAspectRatio="xMidYMid meet"
           ></svg>
         </div>
         <div class="map-caption">
-          Dotted lines represent active trips. Moving circles show estimated
-          vehicle progress between gates.
+          Abstract motorway topology map. Road hubs show connectivity, and cars
+          animate from entry gate -> motorway hub -> exit gate.
         </div>
         <div class="legend">
           <div class="legend-item">
-            <span class="legend-dot" style="background: #34d399"></span>
-            Low Toll (&lt; 80 PLN)
+            <span class="legend-dot" style="background: #1d4ed8"></span>
+            Connected Autostrada Hub
           </div>
           <div class="legend-item">
-            <span class="legend-dot" style="background: #f59e0b"></span>
-            Medium Toll (80-160 PLN)
+            <span class="legend-dot" style="background: #7c3aed"></span>
+            Disconnected Autostrada Hub
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #34d399"></span>
+            Entry Camera Gate
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #f97316"></span>
+            Exit Camera Gate
           </div>
           <div class="legend-item">
             <span class="legend-dot" style="background: #ef4444"></span>
-            High Toll (&gt; 160 PLN)
-          </div>
-          <div class="legend-item">
-            <span class="legend-dot" style="background: #cbd5e1"></span>
-            Gate Node
+            Speeding / Suspicious Path Warning
           </div>
         </div>
+        <h4>Suspicious Behavior Warnings</h4>
         <div id="alerts" class="alerts"></div>
       </section>
     </div>

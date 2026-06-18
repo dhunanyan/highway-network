@@ -7,7 +7,8 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-#define SOCKET_PATH "build/highway-network.sock"
+#define DEFAULT_SOCKET_PATH "build/highway-network.sock"
+#define RESPONSE_CAPACITY 65536
 #define C_RESET "\033[0m"
 #define C_BOLD "\033[1m"
 #define C_DIM "\033[2m"
@@ -16,6 +17,26 @@
 #define C_RED "\033[31m"
 #define C_CYAN "\033[36m"
 #define C_BLUE "\033[34m"
+
+static const char *g_socket_path = DEFAULT_SOCKET_PATH;
+
+enum SendStatus {
+  SEND_OK = 0,
+  SEND_ERR = 1,
+  SEND_TRUNCATED = 2
+};
+
+static void trim_input(char *s)
+{
+  size_t len;
+
+  if (!s) return;
+  len = strlen(s);
+  while (len > 0 && (s[len - 1] == '\n' || s[len - 1] == '\r' || s[len - 1] == ' ' || s[len - 1] == '\t')) {
+    s[len - 1] = '\0';
+    len--;
+  }
+}
 
 static int send_command(const char *command, char *out, size_t out_size)
 {
@@ -35,28 +56,35 @@ static int send_command(const char *command, char *out, size_t out_size)
 
   memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
-  snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", SOCKET_PATH);
+  snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", g_socket_path);
 
   if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
     close(fd);
-    return 1;
+    return SEND_ERR;
   }
 
   if (write(fd, command, strlen(command)) < 0 || write(fd, "\n", 1) < 0) {
     close(fd);
-    return 1;
+    return SEND_ERR;
   }
 
   while ((n = read(fd, out + offset, out_size - 1 - offset)) > 0) {
     offset += (size_t)n;
     if (offset >= out_size - 1) {
-      break;
+      out[offset] = '\0';
+      close(fd);
+      return SEND_TRUNCATED;
     }
+  }
+
+  if (n < 0) {
+    close(fd);
+    return SEND_ERR;
   }
 
   out[offset] = '\0';
   close(fd);
-  return 0;
+  return SEND_OK;
 }
 
 static int json_int(const char *json, const char *key)
@@ -103,7 +131,7 @@ static void print_banner(void)
 {
   printf(C_BOLD C_CYAN "highway-network CLI monitor" C_RESET "\n");
   printf(C_DIM "Shared live state via daemon socket" C_RESET "\n");
-  printf("Socket: " C_BOLD "%s" C_RESET "\n\n", SOCKET_PATH);
+  printf("Socket: " C_BOLD "%s" C_RESET "\n\n", g_socket_path);
 
   printf(C_BOLD "Commands" C_RESET "\n");
   printf("  " C_GREEN "1" C_RESET "      Tick +1\n");
@@ -114,10 +142,26 @@ static void print_banner(void)
   printf("  " C_GREEN "q" C_RESET "      Quit CLI\n\n");
 }
 
-int main(void)
+static void print_send_error(const char *action, int status)
+{
+  if (status == SEND_TRUNCATED) {
+    printf(C_RED "[error]" C_RESET " %s failed: daemon response exceeded %d bytes\n", action, RESPONSE_CAPACITY);
+  } else {
+    printf(C_RED "[error]" C_RESET " %s failed\n", action);
+  }
+}
+
+int main(int argc, char **argv)
 {
   char input[32];
-  char response[8192];
+  char response[RESPONSE_CAPACITY];
+  const char *env_socket = getenv("HIGHWAY_NETWORK_SOCKET");
+
+  if (argc >= 2 && argv[1] && argv[1][0] != '\0') {
+    g_socket_path = argv[1];
+  } else if (env_socket && env_socket[0] != '\0') {
+    g_socket_path = env_socket;
+  }
 
   print_banner();
 
@@ -138,10 +182,15 @@ int main(void)
     }
 
     if (ret == 0) {
-      if (send_command("STATE", response, sizeof(response)) == 0) {
+      int status = send_command("STATE", response, sizeof(response));
+      if (status == SEND_OK) {
         print_compact_state(response);
       } else {
-        printf(C_YELLOW "[state]" C_RESET " daemon unavailable on %s\n", SOCKET_PATH);
+        if (status == SEND_TRUNCATED) {
+          print_send_error("STATE", status);
+        } else {
+          printf(C_YELLOW "[state]" C_RESET " daemon unavailable on %s\n", g_socket_path);
+        }
       }
       continue;
     }
@@ -149,44 +198,51 @@ int main(void)
     if (!fgets(input, sizeof(input), stdin)) {
       break;
     }
+    trim_input(input);
 
-    if (input[0] == 'q') {
+    if (strcmp(input, "q") == 0) {
       printf(C_DIM "Bye." C_RESET "\n");
       break;
     }
 
-    if (input[0] == 'h') {
+    if (strcmp(input, "h") == 0) {
       printf("\n");
       print_banner();
       continue;
     }
 
-    if (input[0] == 'r') {
+    if (strcmp(input, "r") == 0) {
+      int status;
       printf(C_BLUE "[cmd]" C_RESET " reset\n");
-      if (send_command("RESET", response, sizeof(response)) == 0) {
+      status = send_command("RESET", response, sizeof(response));
+      if (status == SEND_OK) {
         print_compact_state(response);
       } else {
-        printf(C_RED "[error]" C_RESET " failed to send RESET\n");
+        print_send_error("RESET", status);
       }
       continue;
     }
 
-    if (input[0] == '1' || input[0] == '5') {
-      printf(C_BLUE "[cmd]" C_RESET " tick +%c\n", input[0]);
-      if (send_command(input[0] == '1' ? "TICK 1" : "TICK 5", response, sizeof(response)) == 0) {
+    if (strcmp(input, "1") == 0 || strcmp(input, "5") == 0) {
+      int status;
+      printf(C_BLUE "[cmd]" C_RESET " tick +%s\n", input);
+      status = send_command(strcmp(input, "1") == 0 ? "TICK 1" : "TICK 5", response, sizeof(response));
+      if (status == SEND_OK) {
         print_compact_state(response);
       } else {
-        printf(C_RED "[error]" C_RESET " failed to send TICK\n");
+        print_send_error("TICK", status);
       }
       continue;
     }
 
-    if (strncmp(input, "20", 2) == 0) {
+    if (strcmp(input, "20") == 0) {
+      int status;
       printf(C_BLUE "[cmd]" C_RESET " tick +20\n");
-      if (send_command("TICK 20", response, sizeof(response)) == 0) {
+      status = send_command("TICK 20", response, sizeof(response));
+      if (status == SEND_OK) {
         print_compact_state(response);
       } else {
-        printf(C_RED "[error]" C_RESET " failed to send TICK 20\n");
+        print_send_error("TICK 20", status);
       }
       continue;
     }

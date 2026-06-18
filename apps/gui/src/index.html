@@ -10,14 +10,39 @@
     <header>
       <div class="header-row">
         <div>
-          <h1>highway-network</h1>
-          <div id="headerSubtitle" class="small">Desktop GUI + C simulator service</div>
+          <div class="header-content">
+            <div class="header-logo"><img src="./logo.png" alt="Logo" /></div>
+
+            <div class="header-text">
+              <h1>highway-network</h1>
+              <div id="headerSubtitle" class="small">
+                Desktop GUI + C simulator service
+              </div>
+            </div>
+          </div>
         </div>
         <div class="lang-switcher">
-          <button id="langToggle" class="lang-toggle" aria-haspopup="listbox" aria-expanded="false">
-            <span class="flag-en" aria-hidden="true"></span>
+          <button
+            id="langToggle"
+            class="lang-toggle"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+          >
+            <span class="lang-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="icon icon-sm" aria-hidden="true">
+                <path
+                  d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm6.9 9h-3.02a15.5 15.5 0 0 0-1.45-5A8.03 8.03 0 0 1 18.9 11ZM12 4.1c.9 1.1 1.96 3.35 2.33 6.9H9.67C10.04 7.45 11.1 5.2 12 4.1ZM9.57 6a15.5 15.5 0 0 0-1.45 5H5.1A8.03 8.03 0 0 1 9.57 6ZM5.1 13h3.02a15.5 15.5 0 0 0 1.45 5A8.03 8.03 0 0 1 5.1 13Zm6.9 6.9c-.9-1.1-1.96-3.35-2.33-6.9h4.66c-.37 3.55-1.43 5.8-2.33 6.9ZM14.43 18a15.5 15.5 0 0 0 1.45-5h3.02A8.03 8.03 0 0 1 14.43 18Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </span>
           </button>
-          <div id="langMenu" class="lang-menu" role="listbox" aria-label="Language selector">
+          <div
+            id="langMenu"
+            class="lang-menu"
+            role="listbox"
+            aria-label="Language selector"
+          >
             <button class="lang-option active" data-lang="en">English</button>
             <button class="lang-option" data-lang="pl">Polski</button>
             <button class="lang-option" data-lang="de">Deutsch</button>
@@ -32,24 +57,39 @@
       <section class="panel full hero-panel">
         <div class="hero-row">
           <div>
-            <div id="heroEyebrow" class="eyebrow">Motorway Operations Console</div>
+            <div id="heroEyebrow" class="eyebrow">
+              Motorway Operations Console
+            </div>
             <h2 id="networkTitle">Poland Highway Monitoring Grid</h2>
             <p id="heroCopy" class="hero-copy">
-              Real-time motorway surveillance with camera-derived vehicle identity,
-              suspicious behavior warnings, and live corridor visibility.
+              Real-time motorway surveillance with camera-derived vehicle
+              identity, suspicious behavior warnings, and live corridor
+              visibility.
             </p>
           </div>
           <div class="hero-badges">
             <div class="hero-badge">
-              <span class="icon icon-lg" data-icon="roads" aria-hidden="true"></span>
+              <span
+                class="icon icon-lg"
+                data-icon="roads"
+                aria-hidden="true"
+              ></span>
               <strong id="badgeRoads">0 roads</strong>
             </div>
             <div class="hero-badge">
-              <span class="icon icon-lg" data-icon="camera" aria-hidden="true"></span>
+              <span
+                class="icon icon-lg"
+                data-icon="camera"
+                aria-hidden="true"
+              ></span>
               <strong id="badgeCameras">0 cameras</strong>
             </div>
             <div class="hero-badge">
-              <span class="icon icon-lg" data-icon="car" aria-hidden="true"></span>
+              <span
+                class="icon icon-lg"
+                data-icon="car"
+                aria-hidden="true"
+              ></span>
               <strong id="badgeFleet">0 active</strong>
             </div>
           </div>
@@ -110,9 +150,19 @@
         <div class="tab-header">
           <h3 id="commandCenterTitle">Command Center</h3>
           <div class="tabs">
-            <button id="tabOverviewBtn" class="tab-btn active" data-tab="overview">Overview</button>
-            <button id="tabRiskBtn" class="tab-btn" data-tab="risk">Risk Radar</button>
-            <button id="tabFleetBtn" class="tab-btn" data-tab="fleet">Fleet Watch</button>
+            <button
+              id="tabOverviewBtn"
+              class="tab-btn active"
+              data-tab="overview"
+            >
+              Overview
+            </button>
+            <button id="tabRiskBtn" class="tab-btn" data-tab="risk">
+              Risk Radar
+            </button>
+            <button id="tabFleetBtn" class="tab-btn" data-tab="fleet">
+              Fleet Watch
+            </button>
           </div>
         </div>
         <div id="tab-overview" class="tab-panel active">

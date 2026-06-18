@@ -1,12 +1,20 @@
-# highway-network
+# Highway Network
 
 Local machine highway toll-network simulator with shared live state.
+
+<p align = "center">
+  <img src="./docs/logo.png" alt="Logo" width="300" />
+</p>
 
 ## Components
 
 - `simulatord` (C): single source of truth for simulation state.
 - `CLI monitor` (C): terminal client connected to daemon.
 - `GUI app` (Electron): desktop visual client connected to daemon.
+
+## Documentation
+
+- [End User Guide](./docs/end-user-guide.md): detailed GUI guide, CLI guide, and class-topic mapping.
 
 ## Run
 

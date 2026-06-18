@@ -8,6 +8,19 @@ const trips = document.getElementById("trips");
 const statusEl = document.getElementById("status");
 const trafficMap = document.getElementById("trafficMap");
 const alertsEl = document.getElementById("alerts");
+const networkTitle = document.getElementById("networkTitle");
+const badgeRoads = document.getElementById("badgeRoads");
+const badgeCameras = document.getElementById("badgeCameras");
+const badgeFleet = document.getElementById("badgeFleet");
+const spotlight = document.getElementById("spotlight");
+const roadHealth = document.getElementById("roadHealth");
+const cameraWatch = document.getElementById("cameraWatch");
+const revenueMix = document.getElementById("revenueMix");
+const fleetIntel = document.getElementById("fleetIntel");
+const overviewBoard = document.getElementById("overviewBoard");
+const riskBoard = document.getElementById("riskBoard");
+const fleetBoard = document.getElementById("fleetBoard");
+const tabButtons = [...document.querySelectorAll(".tab-btn")];
 
 const btnTick1 = document.getElementById("tick1");
 const btnTick5 = document.getElementById("tick5");
@@ -36,6 +49,24 @@ const ROAD_POSITIONS = {
   A50: { x: 560, y: 300 }
 };
 
+function icon(name, extraClass = "") {
+  const cls = extraClass ? `icon ${extraClass}` : "icon";
+  const icons = {
+    roads: `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true"><path d="M8 3h8l-1 6h2l-1.2 6H18l-1 6h-2l1-6h-4l-1 6H9l1-6H7.2L8.4 9H10L8 3Zm3 12h4l.6-3h-4Z" fill="currentColor"/></svg>`,
+    camera: `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true"><path d="M9 5 7.5 7H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2.5L15 5H9Zm3 4.2A3.8 3.8 0 1 1 8.2 13 3.8 3.8 0 0 1 12 9.2Z" fill="currentColor"/></svg>`,
+    car: `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true"><path d="M7 5h10l2.3 5H21a1 1 0 0 1 1 1v5h-2a2 2 0 1 1-4 0H8a2 2 0 1 1-4 0H2v-5a1 1 0 0 1 1-1h1.7L7 5Zm1.3 2L6.9 10h10.2L15.7 7Z" fill="currentColor"/></svg>`,
+    warning: `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true"><path d="M12 4 2.7 20h18.6L12 4Zm1 5v5h-2V9h2Zm0 8v2h-2v-2h2Z" fill="currentColor"/></svg>`,
+    entry: `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true"><path d="M13 5v4h6v6h-6v4l-8-7 8-7Z" fill="currentColor"/></svg>`,
+    exit: `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true"><path d="M11 5v4H5v6h6v4l8-7-8-7Z" fill="currentColor"/></svg>`,
+    revenue: `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true"><path d="M12 3a7 7 0 0 1 7 7c0 4.4-3.6 7-7 7a3 3 0 1 0 3 3h2a5 5 0 1 1-5-5c2.6 0 5-1.8 5-5a5 5 0 1 0-10 0H5a7 7 0 0 1 7-7Z" fill="currentColor"/></svg>`,
+    speed: `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true"><path d="M12 5a9 9 0 1 0 9 9A9 9 0 0 0 12 5Zm0 2a7 7 0 0 1 6.8 5.5H17a5.3 5.3 0 0 0-10 0H5.2A7 7 0 0 1 12 7Zm-1 7 5-3-3 5a1.5 1.5 0 1 1-2-2Z" fill="currentColor"/></svg>`,
+    factory: `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true"><path d="M3 20V8l6 3V8l6 3V4l6 3v13H3Zm3-2h2v-3H6v3Zm4 0h2v-3h-2v3Zm4 0h2v-3h-2v3Z" fill="currentColor"/></svg>`,
+    palette: `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true"><path d="M12 3a9 9 0 0 0 0 18h1.2a2.8 2.8 0 0 0 0-5.6H11a1.5 1.5 0 0 1 0-3h2a4 4 0 0 0 0-8H12Zm-4 7a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm4-3a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm4 3a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" fill="currentColor"/></svg>`,
+    density: `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true"><path d="M5 17h3v2H5v-2Zm5-6h3v8h-3v-8Zm5-4h3v12h-3V7Z" fill="currentColor"/></svg>`
+  };
+  return icons[name] || "";
+}
+
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -49,6 +80,55 @@ function tollColor(toll) {
   if (toll < 80) return "#34d399";
   if (toll <= 160) return "#f59e0b";
   return "#ef4444";
+}
+
+function estimatedSpeed(t) {
+  const totalTicks = Math.max(1, Number(t.totalTicks || 1));
+  const elapsedTicks = Math.max(1, totalTicks - Number(t.ticksLeft || 0));
+  const hours = (elapsedTicks * 30.0) / 3600.0;
+  const progressedKm = Number(t.distanceKm || 0) * (elapsedTicks / totalTicks);
+  if (hours <= 0) return 0;
+  return progressedKm / hours;
+}
+
+function roadStats(state) {
+  const stats = {};
+  state.activeTrips.forEach((t) => {
+    if (!stats[t.road]) {
+      stats[t.road] = { active: 0, revenue: 0, avgSpeed: 0, warnings: 0, samples: 0 };
+    }
+    stats[t.road].active += 1;
+    stats[t.road].revenue += Number(t.toll || 0);
+    stats[t.road].avgSpeed += estimatedSpeed(t);
+    stats[t.road].samples += 1;
+  });
+  (state.alerts || []).forEach((a) => {
+    const road = String(a.route || "").split(":")[0];
+    if (!stats[road]) {
+      stats[road] = { active: 0, revenue: 0, avgSpeed: 0, warnings: 0, samples: 0 };
+    }
+    stats[road].warnings += 1;
+  });
+  Object.values(stats).forEach((s) => {
+    if (s.samples > 0) s.avgSpeed /= s.samples;
+  });
+  return stats;
+}
+
+function setActiveTab(tabId) {
+  tabButtons.forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.tab === tabId);
+  });
+  document.querySelectorAll(".tab-panel").forEach((panel) => {
+    panel.classList.toggle("active", panel.id === `tab-${tabId}`);
+  });
+}
+
+function hydrateStaticIcons() {
+  document.querySelectorAll("[data-icon]").forEach((el) => {
+    const markup = icon(el.dataset.icon || "");
+    if (markup) el.innerHTML = markup;
+  });
 }
 
 function roadSet(state) {
@@ -228,7 +308,7 @@ function renderAlerts(state) {
       const item = document.createElement("div");
       item.className = "alert-item";
       item.innerHTML = `
-        <span class="alert-icon">⚠</span>
+        <span class="alert-icon">${icon("warning")}</span>
         <span>
           <strong>${escapeHtml(a.type || "warning")}</strong> [t=${a.tick}] ${escapeHtml(a.message)}<br/>
           Car: ${escapeHtml(a.vehicleA || "n/a")} · ${escapeHtml(a.make || "?")} ${escapeHtml(a.model || "?")} · ${escapeHtml(a.color || "?")}<br/>
@@ -237,6 +317,171 @@ function renderAlerts(state) {
       `;
       alertsEl.appendChild(item);
     });
+}
+
+function renderHero(state) {
+  const roads = roadSet(state);
+  networkTitle.textContent = `${state.networkName || "Poland Highway Monitoring Grid"}`;
+  badgeRoads.textContent = `${roads.length} roads`;
+  badgeCameras.textContent = `${state.entries.length + state.exits.length} cameras`;
+  badgeFleet.textContent = `${state.activeTripCount} active`;
+
+  const topAlert = (state.alerts || []).slice().reverse()[0];
+  if (topAlert) {
+    spotlight.innerHTML = `
+      <div class="eyebrow">Priority Warning</div>
+      <div><strong>${escapeHtml(topAlert.type || "warning")}</strong> detected on <strong>${escapeHtml(topAlert.route || "unknown route")}</strong>.</div>
+      <div class="small">Vehicle ${escapeHtml(topAlert.vehicleA || "n/a")} · ${escapeHtml(topAlert.make || "?")} ${escapeHtml(topAlert.model || "?")} · Camera ${escapeHtml(topAlert.cameraId || "CAM-UNKNOWN")}</div>
+    `;
+  } else {
+    spotlight.innerHTML = `
+      <div class="eyebrow">Network Status</div>
+      <div><strong>Stable flow.</strong> No suspicious driving events currently flagged by motorway cameras.</div>
+      <div class="small">The console is tracking toll flow, camera identity, route occupancy, and suspicious travel patterns.</div>
+    `;
+  }
+}
+
+function renderRoadHealth(state) {
+  const stats = roadStats(state);
+  const roads = roadSet(state).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  roadHealth.innerHTML = "";
+
+  roads.forEach((road) => {
+    const s = stats[road] || { active: 0, revenue: 0, avgSpeed: 0, warnings: 0 };
+    const badgeClass = s.warnings > 3 ? "bad" : s.warnings > 0 ? "warn" : "good";
+    const badgeText = s.warnings > 3 ? "Hot" : s.warnings > 0 ? "Watch" : "Stable";
+    const div = document.createElement("div");
+    div.className = "road-card";
+    div.innerHTML = `
+      <div class="road-top">
+        <div class="road-code">${icon("roads", "icon-sm")}<span>${road}</span></div>
+        <span class="badge ${badgeClass}">${badgeText}</span>
+      </div>
+      <div class="road-metrics">
+        <span>${icon("car", "icon-xs")} ${s.active} active</span>
+        <span>${icon("revenue", "icon-xs")} ${s.revenue.toFixed(0)} PLN</span>
+        <span>${icon("warning", "icon-xs")} ${s.warnings} warnings</span>
+        <span>${icon("speed", "icon-xs")} ${s.avgSpeed ? s.avgSpeed.toFixed(0) : 0} km/h avg</span>
+      </div>
+    `;
+    roadHealth.appendChild(div);
+  });
+}
+
+function renderCameraWatch(state) {
+  const cameras = [...state.entries.map((g) => ({ ...g, kind: "Entry" })), ...state.exits.map((g) => ({ ...g, kind: "Exit" }))];
+  const watchRoutes = new Set((state.alerts || []).map((a) => String(a.route || "").split(":")[0]));
+  cameraWatch.innerHTML = "";
+
+  cameras.slice(0, 8).forEach((c, idx) => {
+    const hot = watchRoutes.has(c.road);
+    const card = document.createElement("div");
+    card.className = "camera-card";
+    card.innerHTML = `
+      <div class="camera-top">
+        <div class="camera-id">${icon(c.kind === "Entry" ? "entry" : "exit", "icon-sm")}<span>${c.id}</span></div>
+        <span class="badge ${hot ? "warn" : "good"}">${hot ? "Flagged road" : "Clear feed"}</span>
+      </div>
+      <div class="camera-meta">
+        <span>Road ${c.road}</span>
+        <span>${c.name}</span>
+        <span>Lane ${idx + 1}</span>
+      </div>
+    `;
+    cameraWatch.appendChild(card);
+  });
+}
+
+function renderRevenueMix(state) {
+  const buckets = { low: 0, medium: 0, high: 0 };
+  state.activeTrips.forEach((t) => {
+    const toll = Number(t.toll || 0);
+    if (toll < 80) buckets.low += 1;
+    else if (toll <= 160) buckets.medium += 1;
+    else buckets.high += 1;
+  });
+  revenueMix.innerHTML = `
+    <div class="mini-stat"><span>${icon("roads", "icon-xs")} Low toll corridors</span><strong>${buckets.low}</strong></div>
+    <div class="mini-stat"><span>${icon("roads", "icon-xs")} Medium toll corridors</span><strong>${buckets.medium}</strong></div>
+    <div class="mini-stat"><span>${icon("warning", "icon-xs")} High toll corridors</span><strong>${buckets.high}</strong></div>
+    <div class="mini-stat"><span>${icon("revenue", "icon-xs")} Total collected</span><strong>${state.revenue.toFixed(0)} PLN</strong></div>
+  `;
+}
+
+function renderFleetIntel(state) {
+  const byMake = {};
+  const byColor = {};
+  state.activeTrips.forEach((t) => {
+    byMake[t.make] = (byMake[t.make] || 0) + 1;
+    byColor[t.color] = (byColor[t.color] || 0) + 1;
+  });
+  const topMake = Object.entries(byMake).sort((a, b) => b[1] - a[1])[0];
+  const topColor = Object.entries(byColor).sort((a, b) => b[1] - a[1])[0];
+  const avgSpeed = state.activeTrips.length
+    ? state.activeTrips.reduce((sum, t) => sum + estimatedSpeed(t), 0) / state.activeTrips.length
+    : 0;
+  fleetIntel.innerHTML = `
+    <div class="mini-stat"><span>${icon("speed", "icon-xs")} Avg live speed</span><strong>${avgSpeed.toFixed(0)} km/h</strong></div>
+    <div class="mini-stat"><span>${icon("factory", "icon-xs")} Dominant make</span><strong>${topMake ? `${topMake[0]} · ${topMake[1]}` : "n/a"}</strong></div>
+    <div class="mini-stat"><span>${icon("palette", "icon-xs")} Dominant color</span><strong>${topColor ? `${topColor[0]} · ${topColor[1]}` : "n/a"}</strong></div>
+    <div class="mini-stat"><span>${icon("density", "icon-xs")} Warning density</span><strong>${state.activeTripCount ? ((state.alerts.length / state.activeTripCount) * 100).toFixed(0) : 0}%</strong></div>
+  `;
+}
+
+function renderCommandCenter(state) {
+  const stats = roadStats(state);
+  const hottestRoad = Object.entries(stats).sort((a, b) => b[1].warnings - a[1].warnings)[0];
+  const fastest = state.activeTrips
+    .map((t) => ({ ...t, speed: estimatedSpeed(t) }))
+    .sort((a, b) => b.speed - a.speed)
+    .slice(0, 4);
+  const recentAlerts = (state.alerts || []).slice().reverse().slice(0, 4);
+
+  overviewBoard.innerHTML = `
+    <div class="board-card">
+      <h5>Network Posture</h5>
+      <p>${state.activeTripCount > 18 ? "Dense motorway flow across primary corridors." : "Moderate motorway load with room for throughput growth."}</p>
+    </div>
+    <div class="board-card">
+      <h5>Most Pressured Road</h5>
+      <p>${hottestRoad ? `${hottestRoad[0]} with ${hottestRoad[1].warnings} warnings` : "No hot corridor right now."}</p>
+    </div>
+    <div class="board-card">
+      <h5>Camera Coverage</h5>
+      <p>${state.entries.length + state.exits.length} active gate cameras across ${roadSet(state).length} motorway corridors.</p>
+    </div>
+  `;
+
+  riskBoard.innerHTML = `
+    <div class="board-card">
+      <h5>Latest Warnings</h5>
+      <ul>${recentAlerts.length ? recentAlerts.map((a) => `<li>${escapeHtml(a.type)} · ${escapeHtml(a.vehicleA)} · ${escapeHtml(a.route)}</li>`).join("") : "<li>No warnings</li>"}</ul>
+    </div>
+    <div class="board-card">
+      <h5>Risk Heuristic</h5>
+      <p>${state.alerts.length > 6 ? "Escalated monitoring recommended on high-speed corridors." : "Warning volume remains inside expected tolerance."}</p>
+    </div>
+    <div class="board-card">
+      <h5>Operator Note</h5>
+      <p>Repeated speeding on the same road is the clearest signal for targeted enforcement placement.</p>
+    </div>
+  `;
+
+  fleetBoard.innerHTML = `
+    <div class="board-card">
+      <h5>Fastest Live Cars</h5>
+      <ul>${fastest.length ? fastest.map((t) => `<li>${escapeHtml(t.plate)} · ${escapeHtml(t.make)} ${escapeHtml(t.model)} · ${t.speed.toFixed(0)} km/h</li>`).join("") : "<li>No active cars</li>"}</ul>
+    </div>
+    <div class="board-card">
+      <h5>Identity Depth</h5>
+      <p>Plate, make, model, color, road, route, camera source, and live toll are currently tracked per active car.</p>
+    </div>
+    <div class="board-card">
+      <h5>Flow Character</h5>
+      <p>${state.activeTripCount > 12 ? "Mixed private and long-distance motorway traffic profile." : "Low-volume motorway stream with cleaner camera observability."}</p>
+    </div>
+  `;
 }
 
 function render(state) {
@@ -254,6 +499,13 @@ function render(state) {
   mActive.textContent = state.activeTripCount;
   mCompleted.textContent = state.completedTrips;
   mRevenue.textContent = `${state.revenue.toFixed(2)} ${state.currency}`;
+
+  renderHero(state);
+  renderRoadHealth(state);
+  renderCameraWatch(state);
+  renderRevenueMix(state);
+  renderFleetIntel(state);
+  renderCommandCenter(state);
 
   entries.innerHTML = "";
   state.entries.forEach((g) => {
@@ -309,6 +561,7 @@ btnAuto.onclick = () => {
   btnAuto.textContent = "Stop Auto";
 };
 
+hydrateStaticIcons();
 refresh();
 pollTimer = setInterval(() => {
   refresh();
@@ -317,4 +570,10 @@ pollTimer = setInterval(() => {
 window.addEventListener("beforeunload", () => {
   if (autoTimer) clearInterval(autoTimer);
   if (pollTimer) clearInterval(pollTimer);
+});
+
+tabButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    setActiveTab(btn.dataset.tab);
+  });
 });

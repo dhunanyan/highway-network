@@ -13,6 +13,34 @@
       <div id="status" class="status"></div>
     </header>
     <div class="container">
+      <section class="panel full hero-panel">
+        <div class="hero-row">
+          <div>
+            <div class="eyebrow">Motorway Operations Console</div>
+            <h2 id="networkTitle">Poland Highway Monitoring Grid</h2>
+            <p id="networkSubtitle" class="hero-copy">
+              Real-time motorway surveillance with camera-derived vehicle identity,
+              suspicious behavior warnings, and live corridor visibility.
+            </p>
+          </div>
+          <div class="hero-badges">
+            <div class="hero-badge">
+              <span class="icon icon-lg" data-icon="roads" aria-hidden="true"></span>
+              <strong id="badgeRoads">0 roads</strong>
+            </div>
+            <div class="hero-badge">
+              <span class="icon icon-lg" data-icon="camera" aria-hidden="true"></span>
+              <strong id="badgeCameras">0 cameras</strong>
+            </div>
+            <div class="hero-badge">
+              <span class="icon icon-lg" data-icon="car" aria-hidden="true"></span>
+              <strong id="badgeFleet">0 active</strong>
+            </div>
+          </div>
+        </div>
+        <div id="spotlight" class="spotlight-card"></div>
+      </section>
+
       <section class="panel full">
         <div class="controls">
           <button id="tick1">Tick +1</button>
@@ -39,6 +67,46 @@
         <div class="metric">
           <div class="label">Revenue</div>
           <div id="mRevenue" class="value">0</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3>Road Health Matrix</h3>
+        <div id="roadHealth" class="road-health-grid"></div>
+      </section>
+
+      <section class="panel">
+        <h3>Camera Watch</h3>
+        <div id="cameraWatch" class="camera-watch-grid"></div>
+      </section>
+
+      <section class="panel">
+        <h3>Revenue Mix</h3>
+        <div id="revenueMix" class="stack-stats"></div>
+      </section>
+
+      <section class="panel">
+        <h3>Fleet Intelligence</h3>
+        <div id="fleetIntel" class="stack-stats"></div>
+      </section>
+
+      <section class="panel full">
+        <div class="tab-header">
+          <h3>Command Center</h3>
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="overview">Overview</button>
+            <button class="tab-btn" data-tab="risk">Risk Radar</button>
+            <button class="tab-btn" data-tab="fleet">Fleet Watch</button>
+          </div>
+        </div>
+        <div id="tab-overview" class="tab-panel active">
+          <div id="overviewBoard" class="overview-board"></div>
+        </div>
+        <div id="tab-risk" class="tab-panel">
+          <div id="riskBoard" class="overview-board"></div>
+        </div>
+        <div id="tab-fleet" class="tab-panel">
+          <div id="fleetBoard" class="overview-board"></div>
         </div>
       </section>
 

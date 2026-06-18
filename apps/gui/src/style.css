@@ -1,10 +1,15 @@
 :root {
-  --bg: #0f172a;
-  --panel: #1e293b;
-  --line: #334155;
-  --text: #e2e8f0;
-  --muted: #94a3b8;
-  --accent: #0ea5e9;
+  --bg: #0b1120;
+  --panel: rgba(17, 24, 39, 0.82);
+  --panel-2: rgba(21, 31, 54, 0.92);
+  --line: rgba(99, 123, 166, 0.22);
+  --text: #e7edf8;
+  --muted: #9caccc;
+  --accent: #57b5ff;
+  --accent-2: #7c8cff;
+  --good: #34d399;
+  --warn: #f59e0b;
+  --bad: #ef4444;
 }
 * {
   box-sizing: border-box;
@@ -14,30 +19,125 @@ body {
   font-family:
     Segoe UI,
     sans-serif;
-  background: radial-gradient(circle at top, #1e293b, #0f172a);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(66, 153, 225, 0.12), transparent 26%),
+    radial-gradient(circle at 100% 10%, rgba(124, 58, 237, 0.12), transparent 24%),
+    linear-gradient(180deg, #0d1424 0%, var(--bg) 100%);
   color: var(--text);
 }
 header {
-  padding: 20px;
+  padding: 22px 24px 18px;
   border-bottom: 1px solid var(--line);
+  background: rgba(8, 13, 24, 0.65);
+  backdrop-filter: blur(14px);
 }
 h1 {
   margin: 0;
+  font-size: 2.5rem;
+  letter-spacing: -0.04em;
+}
+h2,
+h3,
+h4 {
+  margin-top: 0;
 }
 .container {
-  padding: 16px;
+  padding: 18px;
   display: grid;
-  gap: 14px;
+  gap: 16px;
   grid-template-columns: 1fr 1fr;
 }
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 12px;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: none;
+  backdrop-filter: blur(12px);
 }
 .full {
   grid-column: 1 / -1;
+}
+.hero-panel {
+  background:
+    linear-gradient(135deg, rgba(35, 49, 82, 0.98), rgba(18, 25, 44, 0.94)),
+    linear-gradient(180deg, rgba(87, 181, 255, 0.1), rgba(124, 140, 255, 0.04));
+}
+.hero-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+.eyebrow {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+.hero-copy {
+  max-width: 820px;
+  color: var(--muted);
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+.hero-badges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.hero-badge {
+  min-width: 120px;
+  border: 1px solid rgba(151, 173, 255, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 12px 14px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.hero-badge strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+.icon,
+svg.icon {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  flex: 0 0 auto;
+  color: currentColor;
+  vertical-align: middle;
+}
+.icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.icon-lg,
+svg.icon-lg {
+  width: 18px;
+  height: 18px;
+}
+.icon-sm,
+svg.icon-sm {
+  width: 14px;
+  height: 14px;
+}
+.icon-xs,
+svg.icon-xs {
+  width: 12px;
+  height: 12px;
+}
+.spotlight-card {
+  margin-top: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  min-height: 84px;
+  animation: riseIn 0.5s ease;
 }
 .controls {
   display: flex;
@@ -45,35 +145,43 @@ h1 {
   flex-wrap: wrap;
 }
 button {
-  background: #0b5f84;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 12px;
+  background: rgba(87, 181, 255, 0.08);
+  color: var(--text);
+  border: 1px solid rgba(87, 181, 255, 0.2);
+  border-radius: 12px;
+  padding: 10px 14px;
   cursor: pointer;
+  box-shadow: none;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 button:hover {
-  filter: brightness(1.1);
+  background: rgba(87, 181, 255, 0.12);
+  border-color: rgba(87, 181, 255, 0.34);
 }
 .danger {
-  background: #7f1d1d;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.22);
+  color: #fecaca;
 }
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 .metric {
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px;
+  border-radius: 16px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.015);
 }
 .metric .label {
   color: var(--muted);
   font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 .metric .value {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 700;
 }
 table {
@@ -85,12 +193,13 @@ table {
   min-height: 280px;
   overflow-y: auto;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
 }
 th,
 td {
   border-bottom: 1px solid var(--line);
-  padding: 8px;
+  padding: 10px 8px;
   text-align: left;
 }
 th {
@@ -137,6 +246,7 @@ th {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.03);
 }
 .legend-dot {
   width: 10px;
@@ -172,4 +282,185 @@ th {
 }
 .alert-icon {
   line-height: 1;
+}
+.road-health-grid,
+.camera-watch-grid,
+.stack-stats,
+.overview-board {
+  display: grid;
+  gap: 10px;
+}
+.road-health-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.road-card,
+.camera-card,
+.mini-stat,
+.board-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.road-card {
+  position: relative;
+  overflow: hidden;
+}
+.road-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--accent);
+}
+.road-top,
+.camera-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.road-code,
+.camera-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+.badge {
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.badge.good {
+  background: rgba(52, 211, 153, 0.14);
+  color: #86efac;
+}
+.badge.warn {
+  background: rgba(245, 158, 11, 0.14);
+  color: #fcd34d;
+}
+.badge.bad {
+  background: rgba(239, 68, 68, 0.14);
+  color: #fca5a5;
+}
+.road-metrics,
+.camera-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.road-metrics span,
+.camera-meta span,
+.mini-stat span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.camera-watch-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.stack-stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.mini-stat strong {
+  display: block;
+  font-size: 20px;
+  margin-top: 4px;
+}
+.mini-stat span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.tab-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+.tabs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.tab-btn {
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+  padding: 8px 12px;
+  border: 1px solid transparent;
+}
+.tab-btn.active {
+  background: rgba(87, 181, 255, 0.1);
+  border-color: rgba(87, 181, 255, 0.24);
+  color: var(--text);
+}
+.tab-panel {
+  display: none;
+  margin-top: 14px;
+}
+.tab-panel.active {
+  display: block;
+  animation: fadeIn 0.28s ease;
+}
+.overview-board {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.board-card h5 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.board-card p,
+.board-card ul {
+  margin: 0;
+  color: var(--text);
+}
+.board-card ul {
+  padding-left: 18px;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 980px) {
+  .container,
+  .metrics,
+  .road-health-grid,
+  .camera-watch-grid,
+  .stack-stats,
+  .overview-board {
+    grid-template-columns: 1fr;
+  }
+  .hero-row,
+  .tab-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

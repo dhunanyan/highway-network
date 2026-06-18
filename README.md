@@ -16,6 +16,8 @@ Local machine highway toll-network simulator with shared live state.
 
 - [End User Guide](./docs/end-user-guide.md): detailed GUI guide, CLI guide, and class-topic mapping.
 
+- [End User Guide (Polish Version)](./docs/end-user-guide-pl.md): detailed GUI guide, CLI guide, and class-topic mapping.
+
 ## Run
 
 1. Build:
